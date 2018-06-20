@@ -1,4 +1,7 @@
-\documentclass[9pt,openany]{book}
+% Pour compiler:
+% $ pdflatex plan.tex && bibtex plan && pdflatex plan.tex && pdflatex plan.tex
+
+\documentclass[11pt,openany]{article}
 \usepackage[latin1]{inputenc}
 \usepackage[T1]{fontenc}
 \usepackage[francais]{babel}
@@ -16,19 +19,29 @@
 \newcommand\psibra{\llbracket\psi\rrbracket}
 \newcommand\smallsum{\mathsmaller\sum}
 
+\usepackage{geometry}
+\usepackage{a4wide}
 \lstset{language={C}}
 \lstset{alsoletter={&},morekeywords={inductive,predicate,array,true,false,lemma,&*&}}
 
-\newtheorem{definition}{D\'efinition}[section]
+\newtheorem{definition}{D\'efinition}[subsection]
 \newtheorem{exemple}{Exemple}
 \newtheorem{lemme}{Lemme}
 \newtheorem{theorem}{Th\'eor\`eme}
 
 \setcounter{tocdepth}{2}
 
+\title{Ajout de la th\'eorie logique des tableaux dans VeriFast}
+\author{Pierre Nigron}
 \begin{document}
-\addcontentsline{toc}{chapter}{Introduction}
-\chapter*{Introduction}
+
+\maketitle
+\sloppy
+
+\tableofcontents
+
+%\addcontentsline{toc}{chapter}{Introduction}
+\section*{Introduction}
 		Aujourd'hui, les programmes informatiques sont de plus en plus pr\'esents dans notre quotidien et ont certaines fois notre vie entre leurs lignes. En effet, si un bug informatique entra\^ine un accident dans le m\'etro ou fait exploser une fus\'ee, il risque d'y avoir des pertes humaines. \par
 		Malheureusement, v\'erifier qu'un programme est correct est ind\'ecidable. Par cons\'equent, la m\'ethode la plus courante est de tester un programme dans diff\'erents environnements. Cependant, on ne peut pas tester le nombre infini de vols possibles d'une fus\'ee. Les m\'ethodes de test permettent de conna\^itre le comportement r\'eel du programme dans un environnement pr\'ecis; \`a l'inverse, d'autres m\'ethodes utilisent un mod\`ele de l'ex\'ecution du programme pour d\'eterminer une approximation du comportement du programme dans de nombreux environnements. M\^eme si le r\'esultat est une approximation, ces m\'ethodes d\'etecteront si le programme se comporte correctement. Par contre, elle peut indiquer qu'un programme n'est pas correct alors qu'il l'est, mais ceci n'apporte aucun pr\'ejudice \`a la s\'ecurit\'e.
 \par 
@@ -40,9 +53,9 @@
 
 Tout d'abord, nous nous int\'eresserons \`a la logique du premier ordre et aux proc\'edures de d\'ecision. Ensuite, nous \'evoquerons la v\'erification d\'eductive et plus particuli\`erement celle de \verifast. Enfin, nous aborderons les contributions apport\'ees par le TRE.
 
-\chapter{Logique du premier ordre}
-	\section{Logique du premier ordre}
-		\subsection{Syntaxe}
+\section{Logique du premier ordre}
+	\subsection{Logique du premier ordre}
+		\subsubsection{Syntaxe}
 		On introduit la syntaxe de la logique du premier ordre (FOL) dans le contexte d'une paire $\sum = (\sum^s,\sum^f)$, que nous appelons la signature telle que :
 		\begin{itemize}
 		\item $\sum^s = \{ \sigma_{1}, \sigma_{2},...\}$ est un ensemble de symboles de type. On suppose l'existence d'un type location $Loc \in \sum^{s}$ et d'un type $Bool = \{ \top , \bot \}$, o\`u nous \'ecrivons $\top$ et $\bot$ pour les constantes, respectivement, true et false.
@@ -84,7 +97,7 @@ Les constantes $\top$ et $\bot$, des termes bool\'eens, et l'\'egalit\'e entre d
 \begin{definition}
 (Substitution). Soit un ensemble de variables \textbf{x} et \textbf{y}, une substitution $\theta :$ \textbf{x} $\rightarrow \tau_{\smallsum}(\textbf{y})$ associe chaque variable dans \textbf{x} \`a un terme dans $\tau_{\mathsmaller\sum}(\textbf{y})$.
 \end{definition}
-	\subsection{S\'emantique}
+	\subsubsection{S\'emantique}
 	Les s\'emantiques des FOL formules sont d\'efinies en utilisant l'interpr\'etation des types et des fonctions dans une signature $\sum$ et l'\'evaluation des variables dans $Var$.
 \begin{definition}
 (Interpr\'etation). Une interpr\'etation $I$ pour $\sum$ associe chaque symbole de type $\sigma \in \sum^{s}$ \`a un ensemble non-vide $\sigma^{I}$, chaque symbole de fonction $f^{\sigma_{1},...,\sigma_{n}\sigma} \in \sum^{f}$ avec $n > 0$ \`a une fonction totale $f^{I} : \sigma_{1}^{I}\times ... \times \sigma_{n}^{I}$ et chaque symbole de constante $c^{\sigma} \in \sum^{f}$ \`a un \'el\'ement de $\sigma^{I}$.
@@ -138,9 +151,9 @@ Une th\'eorie du premier ordre est coh\'erente s'il existe des formules non-d\'e
 \begin{definition}
 ($T$-mplication et $T$-\'equivalence). Soit une th\'eorie du premier ordre $T = (\mathsmaller \sum,M)$ et deux $T$-formules $\phi$ et $\psi$, nous \'ecrivons $\phi\models^{T}\psi$ et posons que $\phi$ $T$-implique $\psi$ si et seulement si $\phibra_{T}\subseteq \psibra_{T}$. Nous appelons $\phi$  et $\psi$  $T$-\'equivalent si $\phi\models^{T}\psi$ et $\psi\models^{T}\phi$.
 \end{definition}\par
-	\section{Logique de s\'eparation}
-		\subsection{Syntaxe}
-	La syntaxe de la logique de logique de s\'eparation (SL) est construite sur la syntaxe de FOL, d\'efinie \`a la section 1.1.1. Nous consid\'erons une th\'eorie du premier ordre $T=(\mathsmaller\sum,M)$ telle que $\sum^{s}$ contient les types $Loc$ et $Data$ et $\sum^{f}$ contient une constante $nil^{Loc}$.
+	\subsection{Logique de s\'eparation}
+		\subsubsection{Syntaxe}
+	La syntaxe de la logique de logique de s\'eparation (SL)\cite{OHearnRY01} est construite sur la syntaxe de FOL, d\'efinie \`a la subsection 1.1.1. Nous consid\'erons une th\'eorie du premier ordre $T=(\mathsmaller\sum,M)$ telle que $\sum^{s}$ contient les types $Loc$ et $Data$ et $\sum^{f}$ contient une constante $nil^{Loc}$.
 	\begin{definition}
 	(Formule de la logique de s\'eparation). Une formule SL s'\'ecrit avec les m\^emes r\`egles qu'une formule FOL en ajoutant ces r\`egles :
 	\\$\phi^{SL} ::= \top$~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~(true)\par
@@ -175,7 +188,7 @@ $|$ $t\mapsto u,$~~~~~$t^{Loc},u^{Data}$ $T$-termes~~~~~~(singleton heap)\par
 $|$ $\Theta_{1}*\Theta_{2},$~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~(conjonction s\'eparation)
 \end{definition}
 
-	\subsection{S\'emantique}
+	\subsubsection{S\'emantique}
 	\begin{definition}
 	(Heap).Soit une interpr\'etation $I$, la heap est une partie finie associant une location avec une data, $h : Loc^{I} \rightarrow_{fin} Data^{I}$. Nous utiliserons $Heaps^{I}$ pour repr\'esenter l'ensemble de toutes les heaps sous l'interpr\'etation de $I$.
 	\end{definition}
@@ -212,7 +225,7 @@ $I,\nu,h\models^{SL}\forall x.\psi$~~~~~~~ssi $I,\nu[x\leftarrow v],h\models^{SL
 \begin{definition}
 (Implication et \'equivalence). Soit une formule SL $\phi$ et $\psi$, nous \'ecrivons $\phi\models^{SL}\psi$ et disons que $\phi$ implique $\psi$ si et seulement si $\nu,h\models^{SL}\phi$ implique $\nu,h\models^{SL}\psi$, pour toutes \'evaluations $\nu$ et heap $h$. Nous appelons $\phi$ et $\psi$ \'equivalent quand $\phi\models^{SL}_{T}\psi$ et $\psi\models^{SL}_{T}\phi$. 
 \end{definition}
- 	\section{Proc\'edures de d\'ecision}
+ 	\subsection{Proc\'edures de d\'ecision}
  	\begin{definition}
  	(Probl\`eme de d\'ecision). Le probl\`eme de d\'ecision pour un formule $\phi$ est de d\'eterminer si $\phi$ est valide.
  	\end{definition}
@@ -230,7 +243,7 @@ $I,\nu,h\models^{SL}\forall x.\psi$~~~~~~~ssi $I,\nu[x\leftarrow v],h\models^{SL
 	\begin{definition}
 	(Th\'eorie d\'ecidable). Soit $T$ une th\'eorie logique du premier ordre, $T$ est d\'ecidable si et seulement s'il existe une proc\'edure de d\'ecision.
 	\end{definition}
-Beaucoup de th\'eories doivent \^etre syntaxiquement restreintes pour devenir d\'ecidables. On parle alors de fragment de la logique.		\				\subsection{Presburger}
+Beaucoup de th\'eories doivent \^etre syntaxiquement restreintes pour devenir d\'ecidables. On parle alors de fragment de la logique.		\				\subsubsection{Presburger}
 		L'arithm\'etique de Presburger est munie de la signature : $\smallsum^{f}=\{0,1,+,=\}$ et est accompagn\'ee des axiomes suivant :
 		\begin{enumerate}
 		\item $\forall x.$ $\neg(0=x+1)$
@@ -247,7 +260,7 @@ Beaucoup de th\'eories doivent \^etre syntaxiquement restreintes pour devenir d\
 		
 		
 		
-	\subsection{Th\'eorie des tableaux}	
+	\subsubsection{Th\'eorie des tableaux}	
 	Un tableau logique est une expression qui associe un index \`a un \'el\'ement. Nous notons le type de l'index $T_{I}$ et le type de l'\'el\'ement $T_{E}$. Le type du tableau est not\'e $T_{A}$, un raccourci de $T_{I}\rightarrow T_{E}$, i.e., l'ensemble des fonctions qui associe un \'el\'ement de $T_{I}$ \`a un \'el\'ement de $T_{E}$.\\
 	Posons $a\in T_{A}$ un tableau, il y a 4 fonctions \'el\'ementaires \`a la th\'eorie :
 	\begin{enumerate}
@@ -272,7 +285,7 @@ $term_{I} :$ $array\_ext(term_{A},term_{A})$
 	$\forall a\in T_{A}.$ $\forall e\in T_{E}.$ $\forall i,j\in T_{I}.$ $i=j \rightarrow$ \textit{select(store($a,i,e$)$,j$) $ = e$
 			\\ $\land$ $i\neq j \rightarrow$ select(store($a,i,e$)$,j$) $=$ select($a,j$)}.\par
 	La th\'eorie des tableaux actuelle n'est pas d\'ecidable, m\^eme si la combinaison entre la logique de l'index et la logique de l'\'el\'ement est d\'ecidable. Il faut limiter la syntaxe de la th\'eorie pour la rendre d\'ecidable.
-	\subsubsection{Tableaux comme des fonctions non-interpr\'et\'ees}
+	\paragraph{Tableaux comme des fonctions non-interpr\'et\'ees}
 	Consid\'erons le fragment de la logique qui n'autorise pas les quantificateurs sur les tableaux. Un chemin \'evident est de r\'eduire chaque formule en une combinaison d'autres th\'eories qui tra\^ite les tableaux comme des fonctions non-interpr\'et\'ees.\par
 	Les fonctions non-interpr\'et\'ees sont utilis\'ees pour abstra\^ire, ou g\'en\'eralis\'ee, des th\'eor\`emes. Contrairement aux autres symboles de fonctions, elles ne devraient pas \^etre interpr\'et\'ees comme une partie de la formule. Dans la formule suivante, par exemple, $F$ et $G$ sont non-interpr\'et\'ees alors que le symbole de fonction binaire "+" est interpr\'et\'e comme la fonction addition :\par
 $F(x) = F(G(y)) \lor x+1=y$\par
@@ -311,7 +324,7 @@ La fonction bool\'eennes $\phi_{V}$ est appel\'ee \textbf{value constraint}.
  		Nous repr\'esentons les multisets comme un tableau avec des \'el\'ements de type nat : $ type$ $nat = O$ $|$ $S(nat)$ donc $type$ $multiset = array(index,nat)$. L'\'egalit\'e entre deux nat est bien d\'efinie et donc la contrainte sur le type des \'el\'ements de la proc\'edure de d\'ecision pr\'ec\'edente est respect\'ee.
 
 	
- 	\section{Combinaison de th\'eories d\'ecidables}
+ 	\subsection{Combinaison de th\'eories d\'ecidables}
  	Avant de parler de combinaison de th\'eories d\'ecidables, nous allons d\'efinir quelques notions.
  	\begin{definition}
  	(Combinsaion de th\'eorie).
@@ -333,7 +346,7 @@ La fonction bool\'eennes $\phi_{V}$ est appel\'ee \textbf{value constraint}.
 	\end{definition}
 	Il existe des extensions de la proc\'edure de Nelson-Oppen pouvant surmonter chacune des restrictions. Les techniques de combinaison de d\'ecision sont essentielles \`a la construction des SMT solvers.
 
- 	\section{SMT-solver}
+ 	\subsection{SMT-solver}
 	 		Un SMT-solver permet de r\'esoudre des formules logiques \`a l'aide de proc\'edure de d\'ecision. Nous allons discuter d'une m\'ethode g\'en\'eralle sur laquelle se base la plupart des SMT-solvers.\\ \par Soit $T=(\smallsum,M)$ une th\'eorie du premier ordre sans quantificateur et $DP_{T}$ une proc\'edure pour le fragment des conjonctions de $T$ ($DP_{T}$ peut d\'ecider une conjonction de $T$-lit\'eral). La m\'ethode combine $DP_{T}$ avec un SAT-solver  de diverses mani\`eres afin de construire une proc\'edure de d\'ecision pour T. Cette approche a en pratique de gros avantages, car elle est tr\`es modulaire et tr\`es efficace. Les deux principaux outils de cette m\'ethode travaillent en collaboration : le SAT-solver choisit la valeur des litt\'eraux afin de satisfaire la structure bool\'eennes de la formule et $DP_{T}$ v\'erifie que le choix est coh\'erent dans $T$.\par
 	 		Soit un $T$-litt\'eral $l$, nous lui associons une variable bool\'eenne unique $e(l)$, que nous appelons l'\textbf{encodeur} bool\'een de ce litt\'eral. \'Etendons l'id\'ee aux formules, soit une $T$-formule $\phi$, $e(\phi)$ correspond \`a la formule bool\'eenne o\`u chaque litt\'eral a \'et\'e substitu\'e par son encodeur bool\'een. $e(\phi)$ est appel\'ee le \textbf{squelette propositionnel} de $\phi$. En utilisant ces notations, nous allons \'etudier un aper\c{c}u de cette m\'ethode.\par 
 	 		Soit $T$ la th\'eorie de l'\'egalit\'e, une formule	$\phi :=$ $x=y$ $\land$ $((y=z\land x\neq z)\lor x=z)$.\\
@@ -372,11 +385,11 @@ est satisfaisable, ce qui prouve que $\phi$, la formule originelle, est satisfai
 
 
 \end{tikzpicture}
-\chapter{V\'erification d\'eductive avec \verifast{}}
-	\section{Programme}
+\section{V\'erification d\'eductive avec \verifast{}}
+	\subsection{Programme}
 		\verifast{} permet la v\'erification des programmes C et Java. La s\'emantique d'un programme peut \^etre donn\'ee par l'ensemble de ses ex\'ecutions. Une ex\'ecution est d\'efinie par un nombre fini ou infini de configurations, chacune li\'ee \`a la prochaine ex\'ecution. Une configuration est un \'etat et une continuation. Un \'etat est un \textit{store} et une \textit{heap}. Le \textit{store} sp\'ecifie la valeur des variables du programme. La \textit{heap} sp\'ecifie la valeur des cellules de m\'emoire. La continuation pr\'ecise ce qu'il va se passer apr\`es. Une continuation est soit \textit{une continuation d'instructions}, soit une \textit{return continuation}, soit une \textit{done continuation}.\\
 	Dans un programme, toutes les variables pr\'ec\'edement d\'efinies doivent toujours avoir une valeur dans le \textit{store} et chaque espace m\'emoire doit \^etre r\'epr\'esent\'e dans la \textit{heap}.
-	\section{Annotation et ex\'ecution abstraite}
+	\subsection{Annotation et ex\'ecution abstraite}
 		La v\'erification d\'eductive se base sur l'annotation des programmes. Chaque fonction est v\'erifi\'ee s\'epar\'ement, en utilisant les contrats des autres fonctions et non leurs impl\'ementations. Le contrat d'une fonction consiste en une pr\'econdition et une postcondition. La pr\'econdition sp\'ecifie les attentes, concernant la heap et le store, au d\'ebut de la fonction. La postcondition sp\'ecifie les garanties offertes, concernant le store et la heap, \`a la sortie de la fonction. Les pr\'econditions et postconditions sont exprim\'ees sous forme d'\textit{assertions}. Une assertion est une formule SL. Appelons points-to assertion, l'assertion repr\'esentant la formule singleton heap (voir SL).\\ \\
 		\begin{exemple}
 		Exemple : Soit une fonction r,
@@ -399,13 +412,13 @@ o\`u $p$ est le nom du pr\'edicat, $x_1,...,x_n$ sont les noms des variables et 
 	Les instructions \textit{open} et \textit{close} sont les \textit{ghost instructions}. Nous appelons l'effacement d'un programme annot\'e, le fait, de supprimer toutes les annotations d'un programme.\\ \par
 	
 	Nous allons aborder les notions de consommation et de production d'assertion. Nous verrons, apr\`es, les concepts d'ex\'ecutions abstraites sur les instructions annot\'ees, les fonctions annot\'ees et les programmes annot\'es. Nous finirons par la relation entre les ex\'ecutions abstraites et concr\`etes.\\
-		\subsection{S\'emantique des assertions}
+		\subsubsection{S\'emantique des assertions}
 	Les assertions sont interpr\'et\'ees par rapport \`a une heap abstraite. Nous d\'efinissons l'ensemble des \'el\'ements de la heap abstraite comme l'union des \'el\'ements points-to et des instances de pr\'edicat :\par
 	$AbsHeapElems$ $= \{l\mapsto v| l\in Addresses, v\in \mathbb{Z}\}\cup\{p(v_1,...v_n)|v_1,...,v_n\in\mathbb{Z}\}$\\
 	Nous disons qu'une heap abstraite est bien-form\'ee si elle ne contient pas deux \'el\'ements points-to qui ont la m\^eme adresse.\\
 	Nous d\'efinissons un \'etat abstrait comme une paire d'un store et d'une heap abstraite.
 	
-			\subsubsection{Consommation d'une assertion}
+			\paragraph{Consommation d'une assertion}
 			Nous d\'efinissons l'op\'eration de consommer une assertion. Consommer une assertion dans un \'etat abstrait revient \`a v\'erifier qu'il existe un fragment de heap qui match avec l'assertion et de supprimer le fragment de la heap. La consommation effectue un pattern matching.\par
 	
 	Une points-to assertion et un pr\'edicat peuvent contenir des patterns de variables de la forme $?x$. Un pattern de variable match n'importe quelle valeur et associe la valeur \`a la variable.\\
@@ -428,7 +441,7 @@ $\forall s,H,a,Q,Q'$ $consume(s,H,a,Q)\Rightarrow\\(\forall s', H'$ $Q(s',H')\Ri
 	\begin{lemme}
 		(Consommation s\^ure). Si la consommation d'une assertion r\'eussit dans un \'etat abstrait, alors la heap abstraite peut \^etre s\'epar\'ee en un fragment qui satisfait l'assertion et un fragment qui satisfait la postcondition.
 	\end{lemme}
-			\subsubsection{Production d'une assertion}
+			\paragraph{Production d'une assertion}
 		L'op\'erateur de production d'assertion est l'inverse de celui de consommation: produire une assertion dans un \'etat abstrait donn\'e, \'etend la heap avec un fragment arbitraire de heap satisfiant l'assertion.\\
 		Plus pr\'ecisement, la fonction $produce(s,H,a,Q)$ signifie que la postcondition $Q$ est valable  dans tous les \'etats obtenus en \'etendant l'\'etat abstrait (s, H) avec un fragment de heap qui satisfait l'assertion $a$.\par
 		La fonction auxiliaire $produce$_$pattern(s,\pi,Q)$ signifie que la postcondition $Q$ est valable pour chaque pair $(s',v)$ telle que la valeur $v$ match avec le pattern $\pi$ dans le store $s$ et $s'$ est $s$ mis \`a jour avec le pattern appropri\'e.\par 
@@ -444,11 +457,11 @@ $\forall s,H,a,Q,Q'$ $produce(s,H,a,Q)\Rightarrow\\(\forall s', H'$ $Q(s',H')\Ri
 		\begin{lemme}
 		(Production s\^ure). Si un \'etat abstrait $E=(s,H)$ satisfait une assertion et que la production de cette assertion r\'eussit dans une heap vide, alors la postcondition de la production est valable dans la heap $H$.
 		\end{lemme}
-			\subsubsection{Abstraction de la heap}
+			\paragraph{Abstraction de la heap}
 		Nous disons qu'une heap abstraite $H$ \textit{abstrait directement} une heap abstraite $H'$, not\'e $H \rhd H'$, si $H'$ peut \^etre obtenu en supprimant une instance de pr\'edicat $p(v_1,...,v_n)$ depuis H et en ajoutant quelques ensembles d'\'el\'ements de heap abstraite qui satisfont le corps de $p(v_1,...,v_n)$.\\
 		Nous disons qu'une heap abstraite $H$ \textit{abstrait} une heap abstrait $H'$, not\'e $H\rhd^* H'$, s'il existe un entier naturel $n$ tel que $H\rhd^n H'$.
 		Nous disons qu'une heap abstraite $H$ \textit{abstrait} une heap concr\`ete $h$, not\'e $H\rhd^* h$, si $H$ abstrait la heap abstraite contenant au moins une fois tous les \'el\'ements points-to.\\
-			\subsubsection{Ex\'ecution abstraite}
+			\paragraph{Ex\'ecution abstraite}
 		Nous d\'efinissons maintenant ce qu'est l'ex\'ecution abstraite d'une instruction, d'une fonction et d'un programme.\\
 		La fonction $valid(s,H,c,Q)$ repr\'esente une ex\'ecution abstraite  r\'eussite de $c$, dans un \'etat abstrait $(s,H)$, et que chaque post-\'etat satisfait la postcondition Q. Nous pouvons aussi dire que l'instruction $c$ est valide en ce qui concerne l'\'etat abstrait $(s,H)$ et la postcondition $Q$.
 		\begin{lemme}
@@ -463,7 +476,7 @@ $\forall s,H,a,Q,Q'$ $valid(s,H,a,Q)\Rightarrow\\(\forall s', H'$ $Q(s',H')\Righ
 			Si une instruction est valide dans un \'etat abstrait et une postcondition, alors elle est valide lorsque des \'el\'ements sont ajout\'es \`a la heap abstraite, que ces \'el\'ements sont toujours pr\'esents dans chaque post-\'etat, et la postcondition originale est toujours valable apr\`es avoir supprim\'e les \'el\'ements ajout\'es.
 		\end{lemme}
 		La fonction $valid$_$routine(def)$ stipule que l'ex\'ecution abstraite de la fonction d\'efinie par $def$ r\'eussit ou que cette fonction est valide. Nous disons qu'une ex\'ecution abstraite d'un programme r\'eussit, ou que le programme est valide, si l'ex\'ecution abstraite de chaque fonction r\'eussit, et que l'ex\'ecution de l'instruction \textit{main} r\'eussit dans un store initiale et une heap vide.\\
-			\subsubsection{S\^uret\'e d'une ex\'ecution abstraite}
+			\paragraph{S\^uret\'e d'une ex\'ecution abstraite}
 		Nous allons caract\'eriser la relation entre une ex\'ecution abstraite et une ex\'ecution concr\`ete. Posons qu'un programme se comporte bien, s'il n'a pas d'acc\`es ill\'egal \`a la m\'emoire. Nous \'enoncerons les lemmes et th\'eor\`emes importants permettant de prouver que si une ex\'ecution abstraite d'un programme annot\'e r\'eussit alors le programme se comporte bien. Nous disons qu'une configuration est valide, si sa configuration initiale est valide et les pas d'ex\'ecution pr\'eservent la validit\'e. Puisque la configuration d'erreur n'est pas une configuration valide, il s'ensuit directement que les programmes valides se comportent bien.\par
 		Nous d\'efinissons une configuration valide comme une configuration qui est abstraite par d'autres configurations abstraites valides. Les configurations abstraites sont des pairs d'\'etats abstraits et de continuations annot\'ees, et une configuration d'erreur. \par 
 		Un ensemble $AnnConts$ de continuations annot\'ees est d\'efini inductivement ainsi :\par 
@@ -518,7 +531,7 @@ $\forall s,H,a,Q,Q'$ $valid(s,H,a,Q)\Rightarrow\\(\forall s', H'$ $Q(s',H')\Righ
 		\end{theorem}
 	
 		
-	\section{Logique de sp\'ecification en \verifast{}}
+	\subsection{Logique de sp\'ecification en \verifast{}}
 		La logique de sp\'ecification en \verifast{} se base sur la logique de s\'eparation. La logique de s\'eparation ajoute une r\`egle \`a la logique de Hoare :
 		\begin{center}
 		
@@ -541,7 +554,7 @@ $\forall s,H,a,Q,Q'$ $valid(s,H,a,Q)\Rightarrow\\(\forall s', H'$ $Q(s',H')\Righ
 		Informellement, la r\`egle dit que la preuve de $C$ peut ignorer la partie de la heap ne con\c{c}ernant pas $C$ (ici $R$).\par
 		Les annotations de code dans \verifast{} sont entre les signes $/*@$ et $@*/$ ou sur une ligne de code apr\`es $//@$. L'avantage d'\'ecrire les annotations entre ces symboles est que le code reste compilable par n'importe quel compilateur. En effet, les annotations seront vu comme des commentaires.\par
 		Une notion, que nous n'avons pas abord\'ee, et qui est primordiale dans la logique de sp\'ecification de \verifast, est les invariants de boucles. Les invariants de boucles sont des assertions qui sont vraies avant, pendant et apr\`es la boucle. Ils permettent donc d'assurer que le code est correct pendant et apr\`es la boucle. Nous allons maintenant voir les annotations plus complexes, dont nous n'avons pas encore parl\'ees, dans \verifast.
-			\subsubsection{Types et predicats inductifs}
+			\paragraph{Types et predicats inductifs}
 		
 				Pour permettre des sp\'ecifications riches, \verifast{} supporte les types inductifs. Les types inductifs permettent \`a \verifast{} de repr\'esenter des structures inductives. Souvent, chaque \'el\'ement de la structure doit respecter certaines propri\'et\'es. Par exemple, dans une pile, chaque \'el\'ement doit avoir un espace allou\'e.	Pour repr\'esenter ces conditions, on utilise des pr\'edicats inductifs.\\ Dans l'exemple suivant, le type \textit{ints} repr\'esente la liste des \'el\'ements dans la pile. Le pr\'edicat nodes indique que de l'espace allou\'e pour chaque \'el\'ement et que les \'el\'ements de \textit{ints} correspondent bien aux \'el\'ements de la pile. \par
 			
@@ -562,7 +575,7 @@ struct node {
 @*/
 	
 			\end{lstlisting}			
-			\subsubsection{Fixpoints}
+			\paragraph{Fixpoints}
 				En plus des types inductifs, \verifast{} permet aussi les fixpoints. Un fixpoint est une fonction avec au moins un argument de type inductif. Le corps du fixpoint doit \^etre un \textbf{switch} sur l'un de ses arguments inductifs. Pour s'assurer que les fixpoints sont bien d\'efinis, le corps d'un fixpoint $f$ peut utiliser un autre fixpoint $g$ seulement si $g$ appara\^it avant $f$ dans le programme ou que f est \'egal \`a g et que l'une des composantes d'un argument inductif de $f$ est utilis\'ee \`a la place de cet argument. Par exemple, le fixpoint ci-dessous indique la longueur d'un \'el\'ement de type \textit{ints}.
 			\begin{lstlisting}
 fixpoint int length(ints l){
@@ -572,7 +585,7 @@ fixpoint int length(ints l){
  }
 }
 			\end{lstlisting}
-			\subsubsection{Lemmes}
+			\paragraph{Lemmes}
 			\verifast{} a en r\'ealit\'e une instruction suppl\'ementaire pour le ghost-code, en plus des \textit{open} et \textit{close}. En effet, il est possible d'appeler des lemmes. Un lemme est une fonction logique qui ne renvoie pas forcement un bool\'een. Comme un fixpoint, un lemme prend des argument, \`a une precondition et une postcondition. Le corps d'un lemme repr\'esente une preuve. Cette preuve prouve que la pr\'econdition implique la postcondition pour toutes les valeurs possibles des arguments. L'appel d'un lemme correspond donc \`a l'application d'un th\'eor\`eme.\par
 			Pour que la preuve soit valide, le corps doit satisfaire certaines restrictions. Dans un premier temps, le corps ne doit pas affect\'e l'\'etat concret, plus pr\'ecisement, il ne doit pas modifier de champs ou appeler des fonctions C. Deuxi\`emement, l'ex\'ecution du corps doit terminer. Pour assurer la terminaison, les boucles et les appels de lemmes sont limit\'es. \\
 			Les boucles doivent avoir un variant. Un variant de boucle doit strictement d\'ecroitre  \`a chaque tour de boucle et doit \^etre d\'efini dans un ensemble bien fond\'e.\\
@@ -584,8 +597,8 @@ fixpoint int length(ints l){
 			\end{enumerate}
 				
 
-\chapter{Contributions}
-	\section{Impl\'ementation}
+\section{Contributions}
+	\subsection{Impl\'ementation}
 	L'objectif de l'impl\'ementation est d'int\'egrer les fonctions de la th\'eorie des tableaux dans \verifast{} pour qu'elles soient directement retransmis \`a Z3.\par 
 	L'int\'er\^et d'int\'egrer la th\'eorie des tableaux est de faciliter la manipulation des tableaux mais aussi de faciliter la repr\'esentation d'autres types alg\'ebriques tels que les ensembles et les multi-ensembles.\par
 	Les fonctions de la th\'eorie des tableaux manipulent un type tableau qui \'etait absent dans la logique de \verifast{}. En effet, la logique de sp\'ecification de \verifast{} ne poss\`ede pas de type tableau et la logique multi-sorted de \verifast{} permettant la communication avec Z3 est construite sur 4 types, les types int, bool\'een, r\'eel et inductive.\\
@@ -595,21 +608,21 @@ fixpoint int length(ints l){
 	\end{center}
 	Attention, si $i$ est de type inductive, $box(unbox(i))$ ne redonne pas forc\'ement $i$, m\^eme si les fonctions de boxing/unboxing manipulent le m\^eme type. Nous verrons la raison plus tard.\\ 
 	La premi\`ere \'etape du travail de TRE a donc \'et\'e d'ajouter un type primitif array dans la logique de sp\'ecification de \verifast{}. Il a ensuite fallu ajouter un type array dans les communications avec Z3 et pour finir, ajouter les fonctions de la th\'eorie des tableaux dans la logique de sp\'ecification mais aussi dans la logique multi-sorted afin de pouvoir transmettre le type array \`a Z3.
-		\subsection{Ajout du type array}
+		\subsubsection{Ajout du type array}
 		Soit $T_{A}$ le type d'un tableau, la syntaxe de $T_{A}$ dans \verifast{} est "array$(T_I$,$T_E)$". Par exemple, pour d\'efinir un tableau $a$ des entiers vers les bool\'eens, nous \'ecrivons $array(int,bool)$ $a$. Nous allons maintenant parler de la g\'en\'ericit\'e des tableaux dans \verifast{}, des contraintes pour rester coh\'erent et nous finirons par l'ajout du type tableau \`a la logique multi-sorted.
-			\subsubsection{G\'en\'ericit\'e}
+			\paragraph{G\'en\'ericit\'e}
 			En logique, le domaine et le co-domaine du type tableau sont deux types g\'en\'eriques. Cela signifie qu'ils peuvent \^etre de n'importe quel type. Un des objectifs a donc \'et\'e d'impl\'ementer un type tableau tout aussi g\'en\'erique. Le type et les fonctions ont \'et\'e implement\'ees ainsi mais \verifast{} a pos\'e une limite. Il n'y a pas de fonction g\'en\'erique, dans \verifast, pour repr\'esenter les pointeurs. En effet, il y a seulement des fonctions "integer(int*,int)", "character(char*,char)", etc... qui repr\'esentent des pointeurs de type pr\'ecis. Il n'est donc pas possible actuellement de compl\'eter la biblioth\`eque des tableaux avec uniquement des lemmes et pr\'edicats g\'en\'eriques. Il est, par exemple, impossible de dire qu'un tableau est bien d\'efini g\'en\'eriquement. La fonction array\_model, ci-dessous, indique qu'un tableau d'entiers est bien d\'efini entre $(a+b)$ et $(a+e)$ si un entier est bien d\'efini en $(a+b)$ et qu'un tableau est bien d\'efini entre $(a+b+1)$ et $(a+e)$.
 \begin{lstlisting}
 predicate array_model (int* a, int b, int e, array(int,int) arr) =
  (b >= e) ? true : (integer(a+b,?v) &*& select(arr, b) == v
  &*& array_model(a, b+1, e, arr));
 \end{lstlisting}
-			\subsubsection{Limite du domaine}
+			\paragraph{Limite du domaine}
 			S'il existe un type t de type : t $\rightarrow$ p, p \'etant un type quelconque, des termes tels que $(\lambda x. \neg(xx))(\lambda x.\neg(xx))$ 	deviennent typables alors qu'ils ne sont pas coh\'erents. Or, un tableau peut \^etre repr\'esent\'e comme une fonction non-interpr\'et\'ee de type : domain $\rightarrow$ co-domaine. M\^eme s'il n'y a pas de preuve qu'avec les axiomes et les fonctions sur les tableaux le syst\`eme devient incoh\'erent, la cr\'eation des types inductifs a \'et\'e limit\'e. Il est interdit de d\'efinir un type inductive $t$ avec un param\`etre de type tableau ayant $t$ comme type du domaine. Par exemple :
 			\begin{lstlisting}			
     inductive t = mk_array (array(t,int));
 			\end{lstlisting}
-			\subsubsection{Type habit\'e}
+			\paragraph{Type habit\'e}
 				Dans \verifast{}, tous les types doivent \^etre habit\'es, c'est-\`a-dire, tous les types doivent avoir au moins un \'el\'ement. En effet, il existe cet axiome dans \verifast{} :
 		\begin{lstlisting}
 		fixpoint t default_value<t>();
@@ -643,7 +656,7 @@ lemma void absurd()
    2. inductive t = mk_array (array(int,t))| empty;
 				\end{lstlisting}
 	La premi\`ere version du type t a \'et\'e interdite car le type est non-habit\'e. La deuxi\`eme est autoris\'ee car empty est un \'el\'ement de type t.
-			\subsubsection{Type infini}
+			\paragraph{Type infini}
 				\verifast{} a besoin de savoir si un type est de taille infinie. Si un type est infini, il est au moins aussi grand que le type inductive. Une fonction $f$ de boxing et une fonction $g$ d'unboxing manipulant un m\^eme type infini sont inverses dans les deux sens, c'est-\`a-dire, $g\circ f = id$ et $f\circ g = id$, o\`u $id$ est la fonction identit\'e. Si le type est fini, alors $f\circ g\neq id$. En effet, si $f$ et $g$ manipulent un type fini et que $f\circ g = id$ alors \verifast{} deviendrait incoh\'erent.\par
 		Posons $b_b$ et $u_b$ les fonctions de boxing et d'unboxing du type bool\'een, $b_i$ et $u_i$ les fonctions de boxing et d'unboxing du type int. Nous avons alors $u_i \circ b_i = id$, $b_i\circ u_i=id$ et $u_b\circ i_b=id$ car int est un type infini. Supposons que $b_b\circ u_b=id$ alors que le type bool\'een est fini,\\
 		$\begin{array}{lcl}
@@ -669,7 +682,7 @@ Il est donc possible avec cette propri\'et\'e de prouver le faux en partant du v
 			L'alternative \`a ce probl\`eme a \'et\'e de faire des fonctions de boxing et d'unboxing pour des tableaux de type inductive pour le domaine et le co-domaine. Les tableaux utilisant d'autres types utiliseront les fonctions de boxing et d'unboxing des types de leurs domaine et co-domaine pour transformer leurs indexs et \'el\'ements en type inductive. Comme ces fonctions existent pour tous les types de Z3, cette alternative permet \`a \verifast{} de d\'eclarer, d\`es le d\'ebut, la fonction et son type sans perdre l'aspect g\'en\'erique.
 			
 			
-		\subsection{Ajout des fonctions}
+		\subsubsection{Ajout des fonctions}
 	Pour terminer l'impl\'ementation, il faut maintenant ajouter les fonctions select, store, constant\_array et array\_ext (extensionalit\'e). Il y a deux \'etapes, la premi\`ere est de choisir comment repr\'esenter  et r\'ecup\'erer ces fonctions dans le code de \verifast{}. La deuxi\`eme est de d\'efinir comment ces fonctions vont \^etre communiqu\'ees \`a Z3.\\ \par
 		\verifast{} interdit \`a deux fonctions ou pr\'edicats d'avoir un nom identique. Cette r\`egle est primordiale car elle permet \`a \verifast{} de d\'efinir toutes les primitives dans des biblioth\`eques annexes. Les fonctions de la th\'eorie des tableaux ont \'et\'e d\'efinies dans une nouvelle biblioth\`eque sous la forme de fonctions pures. Une fonction pure est une fonction qui n'a pas de corps. Ainsi, tous les programmes ant\'erieurs restent corrects et les noms restent disponibles si la biblioth\`eque n'est pas incluse.\par
 		Les fonctions de la th\'eorie sont donc, dans un code annot\'e, des fonctions comme les autres. Il faut maintenant savoir comment les rep\'erer pour utiliser les fonctions primitives de Z3. \par
@@ -682,7 +695,7 @@ Il est donc possible avec cette propri\'et\'e de prouver le faux en partant du v
 			Les fonctions sont des primitives dans Z3. L'impl\'ementation consiste donc \`a un appel de fonctions.
 			
 
-	\section{Quicksort}
+	\subsection{Quicksort}
 		L'algorithme de tri Quicksort (voir annexe) doit \^etre l'un des algorithmes le plus connu et le plus utilis\'e. M\^eme si sa correction a \'et\'e d\'emontr\'ee de nombreuses fois. Certifier un programme \verifast{} revient \`a montrer que l'ensemble du code est correct avec \verifast. Il faut donc que les algorithmes les plus classiques soient de nouveau d\'emontr\'es. L'algorithme du Quicksort n'\'etait pas prouv\'e et \'etait un bon exemple pour illustrer l'int\'er\^et de la th\'eorie des tableaux.\par 
 		
 		J'ai d\'efini la sp\'ecification du Quicksort ainsi :\\
@@ -716,12 +729,14 @@ La sp\'ecification de $partition$ a \'et\'e d\'efinie ainsi :\\
 		Pour autoriser les appels r\'ecursifs, un lemme est utilis\'e . Ce lemme dit que si un tableau est bien d\'efini entre lo et hi et $lo <= p<=hi$, alors il existe un tableau bien d\'efini entre lo et p-1, un autre entre p+1 et hi et la case p est bien d\'efini. Ce d\'ecoupage permet aux appels r\'ecursif de respecter la pr\'econdition. Apr\`es les appels r\'ecursif, un lemme inverse permet de reformer un tableau entre lo et hi.
 		
 		
-\chapter{Conclusion}
+\section{Conclusion}
 
-\tableofcontents
+\bibliographystyle{abbrv}
+\bibliography{plan}
+
 
 \appendix
-\chapter*{Quicksort}
+\section*{Quicksort}
 \begin{lstlisting}
 void swap (int* a, int i, int j)
 {
