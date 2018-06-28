@@ -1,5 +1,9 @@
-\documentclass[9pt]{beamer}
-\usepackage[latin1]{inputenc}
+\documentclass[]{beamer}
+
+\setbeamertemplate{footline}[frame number]
+\setbeamertemplate{navigation symbols}{}
+
+%\usepackage[latin1]{inputenc}
 \usepackage[T1]{fontenc}
 \usepackage[francais]{babel}
 \usepackage{listings}
@@ -27,7 +31,7 @@
 \newcommand{\inductive}{\textit{inductive}}
 
 \lstset{language={C}}
-\lstset{alsoletter={&},morekeywords={fixpoint,inductive,predicate,array,true,false,lemma,&*&}}
+\lstset{alsoletter={&},morekeywords={requires,ensures,close,open,fixpoint,inductive,predicate,array,true,false,lemma,&*&}}
 \lstset{showstringspaces=false}
 
 \setlength{\parskip}{1em}
@@ -39,84 +43,160 @@
 \frame{\titlepage}
 \setbeamercovered{invisible}
 
+\begin{frame}[noframenumbering,plain]
+\tableofcontents
+\end{frame}
+
+\section{Motivation}
+
+\begin{frame}[noframenumbering,plain]
+\tableofcontents[currentsection]
+\end{frame}
+
+
+
+
 \begin{frame}{Contexte}
-  	Les programmes informatiques sont souvent pr\'esent dans des situations critiques o\`u le moindre incident pourrait causer de grosses pertes \'economiques ou pire humaines:
+  	Les programmes informatiques sont pr\'esent dans des situations critiques :
   	\begin{itemize}  	
   	\item m\'etro (ligne 14)
-  	\item m\'edicine (pompe \`a insuline)
+  	\item m\'edecine (pompe \`a insuline)
   	\item \'energie (sur\^et\'e des centrales nucl\'eaires)
   	\item et plein d'autres...
   	\end{itemize}
-  	Il faut donc v\'erifier qu'un programme correct.
 \end{frame}
+
+
+
 
 \begin{frame}{Correction d'un programme}
 	Un programme est correct s'il respecte sa sp\'ecification en toutes circonstances.
 	
-	Malheureusement, v\'erifier qu'un programme est correct est un probl\`eme ind\'ecidable.
-	
-	Pour palier \`a ce probl\`eme, il existe diff\'erentes m\'ethodes de v\'erification. 
+	V\'erifier qu'un programme est correct est un probl\`eme ind\'ecidable.
 	
 \end{frame}
+
+
+
+
+
 
 \begin{frame}{M\'ethodes de v\'erification}
-	La m\'ethode la plus courante est de tester un programme dans diff\'erents environnements. L'inconv\'enient de cette m\'ethode est qu'elle est incompl\`ete.
+	La m\'ethode la plus courante : Test $\rightarrow$ incomplet
 	
-	Pour palier \`a ce probl\`eme, il existe d'autres m\'ethodes qui assure qu'un programme est correct seulement s'il l'est. L'inconv\'enient est qu'elles peuvent refuser un programme correct.
+	Autre m\'ethode : Prouver un programme avec la v\'erification d\'eductive
 
 \end{frame}
 
 
-\begin{frame}[fragile]{M\'ethodes d\'eductives}
-	Les m\'ethodes d\'eductives voulant montrer qu'un programme imp\'eratif suit sa sp\'ecifisation utilisent souvent la logique de Hoare.
-	
-	La logique de Hoare utilise un triplet constitu\'e d'une pr\'econdition $B$, d'une postcondition $A$ et d'un programme $P$, not\'e ainsi $\{B\}P\{A\}$. Le triplet est vrai si pour tout \'etat qui rend B vraie et telle que P s'arr\^ete, alors, apr\`es l'ex\'ecution et l'arr\^et de P , A est vraie.
 
-Exemple :
+
+
+
+\begin{frame}[fragile]{V\'erification d\'eductive}
+	La m\'ethode d\'eductive de \verifast{} utilise la logique de Hoare.
+	
+	Triplet de Hoare: pr\'econdition+programme+postcondition
+	
 	\begin{lstlisting}
+	
 	int exemple(int a,int b)
 		 //@ requires a = b;
 		 //@ ensures result = 0;
 		{ return a-b;}
+		
 	\end{lstlisting}
 \end{frame}
 
+
+
+
+
+
 \begin{frame}{\verifast}
-	\verifast{} est un outil de v\'erification d\'eductive de programmes C ou Java. Principalement con\c{c}u par Bart Jacobs, Jan Smans et Frank Piessens \`a l'universit\'e de Leuven, \verifast{} assure en partie qu'il n'y a pas d'acc\`es ill\'egaux \`a la m\'emoire et que les pr\'econdicitons/postconditions sont bien respect\'ees. Cette outil est bas\'e sur la logique de s\'eparation et r\'esout les \'enonc\'es math\'ematiques avec les SMT-solveurs Redux et Z3.
+	\verifast{} est un outil de v\'erification d\'eductive de programmes C ou Java. (B.Jacobs, J.Smans , F.Piessens \`a l'universit\'e de Leuven) 
+	
+	\verifast{} assure entre autres :
+	\begin{itemize}
+	\item Pas d'acc\'es ill\'egaux \`a la m\'emoire
+	\item Les contrats sont respect\'es. (pr\'e/postcondition) 
+\end{itemize}	
+Cette outil est bas\'e sur la logique de s\'eparation et r\'esout les \'enonc\'es math\'ematiques avec les SMT-solveurs Redux et Z3.
 \end{frame}
 
-\begin{frame}{Motivations}
-	Pour certains programmes comme les programmes de tri, il est assez naturel de les sp\'ecifier \`a l'aide de tableaux, d'ensembles et de multi-ensembles. Malheureusement ces tableaux, ensembles et multi-ensembles ne sont pas pr\'evus dans la logique de \verifast{} alors qu'ils sont pourtant bien trait\'es dans Z3.
+
+
+
+
+
+\begin{frame}[fragile]{Motivations}
+
+\begin{lstlisting}[basicstyle=\footnotesize]
+void swap (int* a, int i, int j)
+{int b = a[i];  a[i] = a[j];  a[j] = b;}
+
+int partition (int* a, int lo, int hi)
+{ int pivot = a[hi]; int i = lo - 1; int j;
+  for (j = lo; j < hi; j++) {
+    if (a[j] < pivot) {i++; if (i < j) swap(a, i, j);}
+  }
+  i++; if (i < hi) swap(a, i, hi); return i;}
+  
+void quicksort (int* a, int lo, int hi)
+{if (lo > hi) return;
+ int p = partition(a, lo, hi);
+ quicksort(a, lo, p-1);
+ quicksort(a, p+1, hi);}
+
+		\end{lstlisting}
+\textbf{Pr\'econdition} : Avoir un tableau bien d\'efini\\
+\textbf{Postcondition} : Avoir un tableau bien d\'efini, un multi-ensemble d'\'elements identique et un tableau tri\'e.
 \end{frame}
+
+
+
+
+
+
+
 
 \begin{frame}{Contributions}
-	Les contributions de ce TRE se sont s\'epar\'ees en trois parties d\'ependantes les unes des autres :
 	\begin{enumerate}
 		\item Automatiser la th\'eorie des tableaux dans \verifast.
-		\item Prouver le Quicksort \`a l'aide de \verifast
 		\item Ajouter des biblioth\`eques pour la th\'eorie des tableaux et des multi-ensembles.
+		\item Prouver le Quicksort \`a l'aide de \verifast
 	\end{enumerate}
 \end{frame}
 
-\begin{frame}{Logique du premier ordre}
-	\textbf{Signature} : Une signature $\Sigma$ est une parie $\Sigma=(\Sigma^s,\Sigma^f)$ o\`u $\Sigma^s$ est l'ensemble des symbole de type (aussi appell\'es symboles de sorte) et $\Sigma^f$ l'ensemble des symboles de fonction.
-	
-	Posons $Var = {x,y,z,\ldots}$ un ensemble d\'enombrable de variables du premier ordre. Chaque variable $x^{\sigma} \in Var$ est associ\'ee \`a un type $\sigma \in \Sigma^{s}$.	
-	
-	\textbf{Terme} : Un terme t de type $\sigma\in\Sigma^s$n not\'e $t^\sigma$, sur une signature $\Sigma$ est d\'efini r\'ecursivement par la grammaire :
-	
-	\begin{tabular}{lcll}
-t & ::= & x & et $x^\sigma\in Var$\\
- & $|$ & $f(t_1,\ldots,t_n)$ & $t_1^{\sigma_1},\ldots,t_n^{\sigma_n}$ et $f^{\sigma_1\ldots\sigma_n\sigma}\in\Sigma^f$
 
-\end{tabular}
+
+
+
+
+\section{Th\'eorie des tableaux}
+
+\begin{frame}[noframenumbering,plain]
+\tableofcontents[currentsection]
 \end{frame}
 
-\begin{frame}{Logique du premier ordre 2}
-\textbf{Formule} : Une formule du premier ordre sur une signature $\Sigma$ est d\'efinie r\'ecursivement par la grammaire :
+
+
+
+
+
+\begin{frame}{Logique du premier ordre}
+	Une \textbf{signature} $\Sigma$ est une paire $\Sigma=(\Sigma^s,\Sigma^f)$
+	
+	\begin{tabular}{lcll}
+t & ::= & x & $x^\sigma\in Var$ et $\sigma\in\Sigma^s$\\
+ & $|$ & $f(t_1,\ldots,t_n)$ & $t_1^{\sigma_1},\ldots,t_n^{\sigma_n}$ et $f^{\sigma_1\ldots\sigma_n\sigma}\in\Sigma^f$
+ 
+\end{tabular}
+
+Une \textbf{formule} du premier ordre :
+
 \begin{tabular}{lclcl}
-$\phi^{FOL}$ & $::=$ & $t,$ & $t$ terme & (termes bool\'eens)\\
- & $|$ & $t_{1} \approx t_{2},$ & $t_{1}^{\sigma},t_{2}^{\sigma}$ & (\'egalit\'e)\\
+$\phi^{FOL}$ & $::=$ &  $t_{1} \approx t_{2},$ & $t_{1}^{\sigma},t_{2}^{\sigma}$ & (\'egalit\'e)\\
  & $|$ & $\neg\phi^{FOL},$ & & (n\'egation)\\
  & $|$ & $\phi_{1}^{FOL} \land \phi_{2}^{FOL}$ & & (conjonction)\\
  & $|$ & $\phi_{1}^{FOL} \lor \phi_{2}^{FOL}$ & & (disjonction)\\
@@ -126,303 +206,555 @@ $\phi^{FOL}$ & $::=$ & $t,$ & $t$ terme & (termes bool\'eens)\\
 \end{tabular}
 \end{frame}
 
-\begin{frame}{S\'emantique de la logique de premier ordre}
-\textbf{Interpr\'etation} : Une interpr\'etation $I$ pour $\Sigma$ associe chaque symbole de type $\sigma \in \Sigma^{s}$ \`a un ensemble non-vide $\sigma^{I}$, chaque symbole de fonction $f^{\sigma_{1},\ldots,\sigma_{n}\sigma} \in \Sigma^{f}$ avec $n > 0$ \`a une fonction totale $f^{I} : \sigma_{1}^{I}\times \ldots \times \sigma_{n}^{I}\rightarrow\sigma^I$.
 
-\textbf{\'Evaluation} : Soit une interpr\'etation $I$, une \'evaluation $\nu$ associe chaque variable $x^{\sigma} \in Var$ \`a un \'el\'ement de $\sigma^{I}$.
 
-\end{frame}
 
-\begin{frame}{S\'emantique de la logique de premier ordre 2}
-\textbf{S\'emantique d'une formule du premier ordre} : Soit une interpr\'etation $I$ et une \'evaluation $\nu \in V_{I}$, nous \'ecrivons $I,\nu\models\phi$ si la formule du premier ordre $\phi$ est interpr\'et\'ee par vrai sous $I$ et $\nu$. La relation est d\'efinie inductivement sur la structure de $\phi$ :
 
-\begin{tabular}{rcll}
-$I,\nu$ & $\models$ & $t$ & ssi $t^{I}_{\nu}$ est vrai\\
-$I,\nu$ & $\models$ & $t_{1}\approx t_{2},$ & ssi $t^{I}_{1_{\nu}}=t^{I}_{2_{\nu}},t^{\sigma}_{1}=t^{\sigma}_{2}$\\
-$I,\nu$ & $\models$ & $\neg\phi$ & ssi $I,\nu\models\phi$ est faux\\
-$I,\nu$ & $\models$ & $\phi_{1}\land\phi_{2}$ & ssi $I,\nu\models\phi_{1}$ et $I,\nu\models\phi_{2}$\\
-$I,\nu$ & $\models$ & $\phi_{1}\lor\phi_{2}$ & ssi $I,\nu\models\phi_{1}$ ou $I,\nu\models\phi_{2}$\\
-$I,\nu$ & $\models$ & $\exists x.\phi$ & ssi $I,\nu[x\leftarrow\alpha]\models\phi, x^{\sigma}\in FV(\phi),$ pour certains $\alpha\in\sigma^{I}$\\
-$I,\nu$ & $\models$ & $\forall x.\phi$ & ssi $I,\nu[x\leftarrow\alpha]\models\phi, x^{\sigma}\in FV(\phi),$ pour tout $\alpha\in\sigma^{I}$
 
-\end{tabular}
-\end{frame}
 
-\begin{frame}{S\'emantique de la logique de premier ordre 3}
-\textbf{Satisfaisable et valide} : Une formule du premier ordre $\phi$ est satisfaisable dans l'interpr\'etation $I$ s'il existe une \'evaluation $\nu$ telle que $I,\nu\models\phi$. Sinon, la formule est insatisfaisable. Si $I,\nu\models\phi$ pour tout $\nu$, alors $\phi$ est valide et $\neg\phi$ est insatisfaisable.
-
-\textbf{Implication et \'equivalence} : Soit deux formules du premier ordre $\phi_{1}$ et $\phi_{2}$, nous \'ecrivons $\phi_{1}\models^{I}\phi_{2}$ et disons que $\phi_{1}$ implique $\phi_{2}$ dans l'interpr\'etation de $I$ ssi $I,\nu\models\phi_{1}$ implique $I,\nu\models\phi_{2}$ pour toute \'evaluation $\nu$. Nous appelons $\phi_{1}$  et $\phi_{2}$  \'equivalentes si $\phi_{1}\models^{I}\phi_{2}$ et $\phi_{2}\models^{I}\phi_{1}$.
-\end{frame}
-
-\begin{frame}{Th\'eorie du premier ordre}
-\textbf{Th\'eorie du premier ordre} : Une th\'eorie du premier ordre est une paire $T=( \Sigma,M)$ telle que $ \Sigma$ est une signature et $M$ est un ensemble non vide de paire ($I,\nu$), appel\'e un mod\`ele de $T$, o\`u $I$ est une interpr\'etation et $\nu\in V_{I}$ est une \'evaluation.
-
-Soit $T$ une th\'eorie, un terme de la th\'eorie est un $T$-terme et une formule $\phi$ est une $T$-formule. Nous notons l'ensemble des T-mod\`eles de $\phi$ par$\phibra_{T} = \{(I,\nu)\in M | I,\nu\models\phi\}$.
-\end{frame}
-
-\begin{frame}{Th\'eorie du premier ordre 2}
-\textbf{$T$-satisfaisable et $T$-valide} : Soit $T = (\Sigma,M)$ une th\'eorie du premier ordre, une $T$-formule $\phi$ est $T$-satisfaisable si $\phibra_{T} \neq \emptyset$ sinon $T$-insatisfaisable. Si $\phi$ est $T$-satisfaisable si et seulement si $\psi$ est $T$-satisfaisable alors $\phi$ et $\psi$ sont \'equisatisfaisables dans T. Si $\phibra_{T} = M$ alors $\phi$ est $T$-valide et $\neg\phi$ est $T$-insatisfaisable.
-
-\textbf{$T$-implication et $T$-\'equivalence} : Soit une th\'eorie du premier ordre $T = ( \Sigma,M)$ et deux $T$-formules $\phi$ et $\psi$, nous \'ecrivons $\phi\models^{T}\psi$ et posons que $\phi$ $T$-implique $\psi$ si et seulement si $\phibra_{T}\subseteq \psibra_{T}$. Nous appelons $\phi$  et $\psi$  $T$-\'equivalent si $\phi\models^{T}\psi$ et $\psi\models^{T}\phi$.
-\end{frame}
-
-\begin{frame}{Th\'eorie des tableaux}
-	Un tableau logique est une expression qui associe un \'el\'ement \`a chaque indice. Soit $\sigma_I$ le type des indices , $\sigma_E$ le type des \'el\'ements et $\sigma_A$ le type du tableau.
-	La th\'eorie des tableaux est muni de la signature : $\Sigma^s=\{\sigma_I,\sigma_E,\sigma_A\}$ et 
-	$\Sigma^f=\{select^{\sigma_A\sigma_I\sigma_E},store^{\sigma_A\sigma_I\sigma_E\sigma_A},constant\_array^{\sigma_E\sigma_A},array\_ext^{\sigma_A\sigma_A\sigma_I}\}$.
+\begin{frame}[fragile]{Th\'eorie des tableaux}
+	Soit $\sigma_I$ le type des indices, $\sigma_E$ le type des \'el\'ements et $\sigma_A$ le type du tableau.
 	
-	\textbf{Select} : Soit $i\in \sigma_I$, \textit{select(a,i)} renvoie la valeur de l'\'el\'ement \`a l'indice $i$.
+	La th\'eorie des tableaux est munie de la signature : $\Sigma^s=\{\sigma_I,\sigma_E,\sigma_A\}$ \\et $\Sigma^f=\{select^{\sigma_A\sigma_I\sigma_E},store^{\sigma_A\sigma_I\sigma_E\sigma_A},constant\_array^{\sigma_E\sigma_A},array\_ext^{\sigma_A\sigma_A\sigma_I}\}$.
 	
-	\textbf{Store} :  Soit $i\in \sigma_I$ et $e\in \sigma_E$, \textit{store(a,i,e)} renvoie un nouveau tableau avec les m\^emes valeurs que le tableau $a$ et la valeur $e$ \`a l'indice $i$.
-	
-	\textbf{Constant_array} : Soit $e\in \sigma_E$, \textit{constant\_array}($e$) renvoie un tableau tel que $\forall i\in \sigma_I$ $select(constant\_array(e),i)$ $= e$.
-	
-	\textbf{Extensionalit\'e} : Soit $a,b\in \sigma_A$, \textit{array_ext}($a,b$) renvoie un indice $i$ tel que $select(a,i) = select(b,i)\rightarrow a = b$
+Exemple :
+	\[\exists a\in\sigma_A \exists i,j\in\sigma_I, select(a,i)\neq select(a,j)\]
+
 \end{frame}
 
-\begin{frame}{Axiome read-over-write}
-	L'axiome principal utilis\'e pour d\'efinir les fonctions \textit{select} et \textit{store} est l'axiome \textbf{read-over-write} :\\
-	$\forall a\in \sigma_A.$ $\forall e\in \sigma_E.$ $\forall i,j\in \sigma_I.$\\ 
-	\textit{select(store($a,i,e$)$,i$) $ = e$ $\land$ \\
-			  $i\neq j \rightarrow$ select(store($a,i,e$)$,j$) $=$ select($a,j$)}.	
-\end{frame}
 
-\begin{frame}{Logique de sp\'ecification de \verifast}
-	La logique de sp\'ecification est compos\'e de diff\'erents outils :
-	\begin{itemize}
-		\item pr\'e/postconditions
-		\item invariant de boucle
-		\item types/pr\'edicats inductifs
-		\item fixpoints
-		\item lemmes
-	\end{itemize}
-\end{frame}
 
-\begin{frame}[fragile]{Pr\'edicats}
-En \verifast, les annotations sont exprim\'es sous forme de formules. Il est possible d'enfermer (close) une formule dans un pr\'edicat ou de l'ouvrir pour produire (open) une formule.
-	\begin{lstlisting}
-	predicate equal(x,y) := x=y
-	int exemple(int a, int b)
-	  //@ requires equal(a,b);
-	  //@ ensures equal(result,0);
-	{
-	  //@ open equal(a,b);
-	  return a-b;
-	  //@ close equal(result,0);
-	}
-	\end{lstlisting}
+
+
+
+
+
+
+
+\begin{frame}{Axiomes}
+Axiomes de select et store :
+
+	$\forall a\in \sigma_A.$ $\forall e\in \sigma_E.$ $\forall i,j\in \sigma_I.$
+	\textit{select(store($a,i,e$)$,i$) $ = e$}
 	
-	Les actions "open" et "close" font parties du code fant\^omes.
+	$\forall a\in \sigma_A.$ $\forall e\in \sigma_E.$ $\forall i,j\in \sigma_I.$ 
+	\\ \hspace{20pt}
+	$i\neq j \rightarrow$ select(store($a,i,e$)$,j$) $=$ select($a,j$)
+			  		
+Axiome de constant_array et select :
+  
+    $\forall e\in\sigma_E.$ $\forall i\in \sigma_I.$ $select(constant\_array(e),i)$ $= e$
+    
+Axiome de l'extensionalit\'e :
+
+	$\forall a,b\in\sigma_A. \ a \neq b\rightarrow$ \\ $\hspace{20pt}select(a,array\_ext(a,b)) \neq select(b,array\_ext(a,b))$
+	
+	
+
+	
 \end{frame}
 
-\begin{frame}[fragile]{Types/Pr\'edicats inductif}
 
-Les types et pr\'edicats inductifs permettent des repr\'esentations plus complexe.
-	\begin{lstlisting}
-struct node {
-	struct node *next;
-	int value;
-};
+
+
+
+\section{\verifast}
+
+
+
+
+\begin{frame}[noframenumbering,plain]
+\tableofcontents[currentsection]
+\end{frame}
+
+
+
+
+
+\begin{frame}[fragile]{Logique de sp\'ecification de \verifast}
+
+\begin{lstlisting}[basicstyle=\footnotesize]
+struct list { struct list *next; int value; };
 				
 inductive ints = ints_nil | ints_cons(int, ints);
 
-predicate nodes(struct node *node, ints num) =
-	node == 0 ?
-	num == ints_nil :
+predicate lists(struct list *list, ints num) =
+	list == NULL ? num == ints_nil :
 	num == ints_cons(?number,?num2) 
-	&*& node -> next |-> ?n &*& node->value |-> number
-	&*& malloc_block_node(node) &*& nodes(n,num2);
-	\end{lstlisting}
-\end{frame}
-
-\begin{frame}[fragile]{Fixpoints}
-	\verifast{} permet aussi les fixpoints. Un fixpoint est une fonction avec au moins un argument de type inductif. Le corps du fixpoint doit \^etre un \textbf{switch} sur l'un de ses arguments inductifs. 
-	\begin{lstlisting}
-fixpoint int length(ints l){
+	&*& list -> next |-> ?n &*& list->value |-> number
+	&*& lists(n,num2);
+	
+fixpoint int length_ints(ints l){
  switch(l) {
   case ints_nil : return 0;
-  case cons(h,t) : return 1 + length(t);
- }
-}
+  case ints_cons(h,t) : return 1 + length_ints(t);
+ }}
+ 
+ lemma void empty_list(struct list *l)
+  requires l == NULL;
+  ensures lists(l,ints_nil);
+ {close lists(l,ints_nil);}
 	\end{lstlisting}
+
 \end{frame}
 
-\begin{frame}{Lemmes}
-	\verifast{} a une troisi\`eme instruction dans le code fant\^ome. Il est possible de faire appel \`a un lemme. Un lemme prend des arguments, une pr\'econdition et une postcondition. Le corps du lemme est une preuve que la pr\'econdition implique la postcondition pour toutes les valeurs possibles des arguments. L'appel 	d'un lemme correspond donc \`a l'application d'un th\'eor\`eme.
-	
-	Un lemme doit respecter deux conditions :
-	\begin{itemize}
-	\item Le corps ne doit pas affecter le programme (ne pas modifier des champs ou appeler une fonction C)
-	\item Le corps doit terminer
-	\end{itemize}
+
+
+
+
+
+
+
+\section{Automatisation de la th\'eorie des tableaux}
+
+
+
+\begin{frame}[noframenumbering,plain]
+\tableofcontents[currentsection]
 \end{frame}
 
 \begin{frame}{Automatisation de la th\'eorie des tableaux}
-L'objectif de l'impl\'ementation est d'int\'egrer les fonctions de la th\'eorie des tableaux dans \verifast{} pour qu'elles soient directement retransmises \`a Z3.
 
-L'impl\'ementation de l'automatisation a \'et\'e divis\'ee en trois parties :
-	\begin{enumerate}
-		\item Ajouter un type tableau 
-		\item Ajouter les fonctions de la th\'eorie
-	\end{enumerate}
+\tikzset{every picture/.style={line width=0.75pt}} %set default line width to 0.75pt        
 
-\end{frame}
+\begin{tikzpicture}[x=0.75pt,y=0.75pt,yscale=-1,xscale=1]
+%uncomment if require: \path (0,498.23333740234375); %set diagram left start at 0, and has height of 498.23333740234375
 
-\begin{frame}{Type existant dans la logique du premier ordre}
-La logique du premier ordre de \verifast{} \'etait compos\'ee des types int, bool\'een, r\'eel et \inductive.
+\draw    (129, 49.51) rectangle (317.82, 227.83)   ;
+\draw    (155.28,24.42) -- (155.28,49.78) ;
+\draw [shift={(155.28,49.78)}, rotate = 270] [color={rgb, 255:red, 0; green, 0; blue, 0 }  ]   (0,0) .. controls (3.31,-0.3) and (6.95,-1.4) .. (10.93,-3.29)(0,0) .. controls (3.31,0.3) and (6.95,1.4) .. (10.93,3.29)   ;
 
-Le type \inductive{} repr\'esente plusieurs types dont les types g\'en\'eriques. Par cons\'equent, il existe des fonctions de \textit{boxing} et d'\textit{unboxing}. Les fonctions de boxing permettent aux \'el\'ements d'un type diff\'erent d'\inductive{} d'\^etre utilis\'e dans des fonctions g\'en\'eriques.
+\draw    (274.6,34.47) -- (274.52,49.78) ;
+\draw [shift={(274.52,49.78)}, rotate = 270.29] [color={rgb, 255:red, 0; green, 0; blue, 0 }  ]   (0,0) .. controls (3.31,-0.3) and (6.95,-1.4) .. (10.93,-3.29)(0,0) .. controls (3.31,0.3) and (6.95,1.4) .. (10.93,3.29)   ;
 
-Par exemple, \textit{mk_boxed_int} : $int \rightarrow inductive$ et \textit{mk_unboxed_int} :  $inductive \rightarrow int$.
+\draw    (174.57, 62.49) rectangle (275.28, 86.08)   ;
+\draw    (155.28,49.78) -- (224.93,62.49) ;
+\draw [shift={(224.93,62.49)}, rotate = 190.34] [color={rgb, 255:red, 0; green, 0; blue, 0 }  ]   (0,0) .. controls (3.31,-0.3) and (6.95,-1.4) .. (10.93,-3.29)(0,0) .. controls (3.31,0.3) and (6.95,1.4) .. (10.93,3.29)   ;
 
-\textbf{Propri\'et\'e} : La propri\'et\'e de ces fonctions est que :
-	\begin{center}
-		$mk\_unboxed\_int(mk\_boxed\_int(2)) = 2$
-	\end{center}
-	Attention, si $i$ est de type \textit{inductive}, $box(unbox(i))$ donne $i$ uniquement si l'\textit{unboxing} transforme vers un type infini.
-\end{frame}
+\draw    (274.52,49.78) -- (224.93,62.49) ;
+\draw [shift={(224.93,62.49)}, rotate = 345.64] [color={rgb, 255:red, 0; green, 0; blue, 0 }  ]   (0,0) .. controls (3.31,-0.3) and (6.95,-1.4) .. (10.93,-3.29)(0,0) .. controls (3.31,0.3) and (6.95,1.4) .. (10.93,3.29)   ;
 
-\begin{frame}{Les tableaux dans la logique de sp\'ecification}
-La syntaxe du type tableau dans \verifast est "array($\sigma_I$,$\sigma_E$)". Par exemple, un tableau des entiers vers les bool\'eens est repr\'esent\'e ainsi : "array(int,bool)".
+\draw    (224.93,86.08) -- (225.15,98.15) ;
+\draw [shift={(225.15,98.15)}, rotate = 268.92] [color={rgb, 255:red, 0; green, 0; blue, 0 }  ]   (0,0) .. controls (3.31,-0.3) and (6.95,-1.4) .. (10.93,-3.29)(0,0) .. controls (3.31,0.3) and (6.95,1.4) .. (10.93,3.29)   ;
 
-L'objectif de l'int\'egration du type tableau est de le rendre le plus expressif possible sans nuire \`a la coh\'erence de \verifast.
-\end{frame}
+\draw    (174.8, 98.15) rectangle (275.51, 121.75)   ;
+\draw    (225.15,121.75) -- (225.38,133.82) ;
+\draw [shift={(225.38,133.82)}, rotate = 268.92] [color={rgb, 255:red, 0; green, 0; blue, 0 }  ]   (0,0) .. controls (3.31,-0.3) and (6.95,-1.4) .. (10.93,-3.29)(0,0) .. controls (3.31,0.3) and (6.95,1.4) .. (10.93,3.29)   ;
 
-\begin{frame}[fragile]{G\'en\'ericit\'e}
-	En logique de sp\'ecification, le type des indices et des \'el\'ements sont des types g\'en\'eriques. Nous voulions alors que le type tableau \verifast{} soit lui aussi g\'en\'erique. L'impl\'ementation permet un type tableau g\'en\'erique.
-	
-	Par contre, la totalit\'e de la biblioth\`eque n'a pas pu l'\^etre car il n'existe pas de pr\'edicat g\'en\'erique sur les pointeurs.
-	\begin{lstlisting}[basicstyle=\footnotesize]
-predicate array_model (int* a, int b, int e, array(int,int) arr) =
- (b >= e) ? true : (integer(a+b,?v) &*& select(arr, b) == v
- &*& array_model(a, b+1, e, arr));
-	\end{lstlisting}
-\end{frame}
+\draw    (175.03, 133.82) rectangle (277.56, 183.18)   ;
+\draw    (226.14,182.42) -- (226.37,194.49) ;
+\draw [shift={(226.37,194.49)}, rotate = 268.92] [color={rgb, 255:red, 0; green, 0; blue, 0 }  ]   (0,0) .. controls (3.31,-0.3) and (6.95,-1.4) .. (10.93,-3.29)(0,0) .. controls (3.31,0.3) and (6.95,1.4) .. (10.93,3.29)   ;
 
-\begin{frame}[fragile]{Limite du domaine}
-Un axiome assez naturel que des utilisateurs de \verifast{} pourraient vouloir ajouter est que $\forall f\in \sigma_I \rightarrow \sigma_E$, $\exists a\in \sigma_A$ tel que $\forall i\in I, f(i) = select(a,i)$.
-		Or, l'axiome n'est pas compatible avec un type t \'equivalent \`a array(t,p), p \'etant un type quelconque. Il est par cons\'equent interdit de d\'efinir un type \textit{inductive} $t$ avec un param\`etre de type tableau ayant $t$ comme type du domaine. Par exemple, la d\'efinition suivante est interdite :
-			\begin{lstlisting}			
-    inductive t = mk_array (array(t,int));
-			\end{lstlisting}
-\end{frame}
+\draw    (170.7, 194.49) rectangle (276.04, 218.09)   ;
+\draw    (200.09, 263.87) rectangle (246.42, 287.47)   ;
+\draw    (222.88,246.56) -- (223.26,263.87) ;
+\draw [shift={(223.26,263.87)}, rotate = 268.74] [color={rgb, 255:red, 0; green, 0; blue, 0 }  ]   (0,0) .. controls (3.31,-0.3) and (6.95,-1.4) .. (10.93,-3.29)(0,0) .. controls (3.31,0.3) and (6.95,1.4) .. (10.93,3.29)   ;
 
-\begin{frame}[fragile]{Type habit\'e}
-Dans \verifast{}, tous les types doivent \^etre habit\'es, c'est-\`a-dire, tous les types doivent avoir au moins un \'el\'ement. En effet, il existe cet axiome dans \verifast{} :
-		\begin{lstlisting}
-fixpoint t default_value<t>();
-		\end{lstlisting}
-		Cet axiome retourne un \'el\'ement du type t. Donc s'il existe un type non-habit\'e alors le syst\`eme n'est plus coh\'erent.
-		
-\end{frame}
+\draw    (223.37,218.09) -- (223.75,235.4) ;
+\draw [shift={(223.75,235.4)}, rotate = 268.74] [color={rgb, 255:red, 0; green, 0; blue, 0 }  ]   (0,0) .. controls (3.31,-0.3) and (6.95,-1.4) .. (10.93,-3.29)(0,0) .. controls (3.31,0.3) and (6.95,1.4) .. (10.93,3.29)   ;
 
-\begin{frame}[fragile]{Type habit\'e 2}
-  Par exemple, avec le type stream ci-dessous :
-\begin{lstlisting}
-inductive stream = Cons (int, stream);
-\end{lstlisting}
-Il est possible de prouver le faux avec ces deux fonctions :
-\begin{lstlisting}[basicstyle=\footnotesize]
-lemma void no_stream (stream x)
-	//@ requires true;
-	//@ ensures false;
-	{ switch (x) : {
-		case Cons(_,s) { no_stream(s); }
-	}
 
-lemma void absurd()
-	//@ requires true
-	//@ ensures false
-	{ no_stream(default_value<stream>())}
+\draw (153.34,16.43) node  [align=left] {{\footnotesize C}};
+\draw (274.07,16.83) node  [align=left] {{\footnotesize Annotations}\\
+{\footnotesize (logique de s\'eparation)}};
+\draw (223.94,73.69) node  [align=left] {{\footnotesize Parsing}};
+\draw (226.22,109.08) node  [align=left] {{\footnotesize Typing}};
+\draw (230.02,156.71) node  [align=left] {{\footnotesize G\'en\'eration des }\\{\footnotesize conditions de }\\{\footnotesize verification}};
+\draw (226.22,205.53) node  [align=left] {{\footnotesize Boxing}};
+\draw (223.18,273.01) node  [align=left] {{\footnotesize Z3}};
+\draw (224.42,239.25) node  [align=left] {{\footnotesize Logique du premier ordre }};
+\draw (424.42,73.25) node  [align=left] {{\footnotesize L'impl\'ementation de l'automatisation }\\ {\footnotesize se divise en deux parties :}};
+\draw (424.42,109.08) node  [align=left] {{\footnotesize 1. Ajouter un type tableau}\\ {\footnotesize 2. Ajouter les fonctions de la th\'eorie}};
 
-		\end{lstlisting}
-		
-\end{frame}
-
-\begin{frame}[fragile]{Type habit\'e 3}
-Pour \'eviter la cr\'eation d'un type non-habit\'e \`a l'aide des tableaux, il a \'et\'e interdit de cr\'eer un type inductif $t$ ayant uniquement comme param\`etre des tableaux utilisant $t$ pour le type des indices ou des \'el\'ements. Par exemple, ci-dessous, la premi\`ere version du type t a \'et\'e interdite car le type est non-habit\'e. La deuxi\`eme est autoris\'ee car empty est un \'el\'ement de type t. :
-				\begin{lstlisting}			
-   1. inductive t = mk_array (array(int,t));
-   2. inductive t = mk_array (array(int,t))| empty;
-				\end{lstlisting}
-\end{frame}
-
-\begin{frame}{Type infini}
-	\verifast{} a besoin de savoir si un type est de taille infinie. Si un type est infini, la composition de sa fonction de boxing et d'unboxing forment l'identit\'e dans les deux sens.
-	
-	Par contre, si un type est fini, sa fonction de boxing $f$ et sa fonction d'unboxing $g$  sont inverses dans un seul sens, c'est-\`a-dire, $g\circ f = id$ et $f\circ g \neq id$, o\`u $id$ est la fonction identit\'e. En effet, si $f$ et $g$ manipulent un type fini et que $f\circ g = id$ alors \verifast{} deviendrait incoh\'erent.
-
-Un tableau est infini lorsque ?
-\end{frame}
-
-\begin{frame}[fragile]{Type infini 2}
-
-Posons $b_b$ et $u_b$ les fonctions de boxing et d'unboxing du type bool\'een, $b_i$ et $u_i$ les fonctions de boxing et d'unboxing du type int. Nous avons alors $u_i \circ b_i = id$, $b_i\circ u_i=id$ et $u_b\circ i_b=id$ car int est un type infini. Supposons que $b_b\circ u_b=id$ alors que le type bool\'een est fini,
-		
-		$\begin{array}{lccccll}
-		
-		u_b(b_i(0)) & = & vrai & \lor & u_b(b_i(0))& = & faux$ par def du type bool\'een$ \\
-		b_b(u_b(b_i(0))) & = & b_b(vrai)& \lor & b_b(u_b(b_i(0))) & = & b_b(faux)\\
-		b_i(0) & = & b_b(vrai)& \lor & b_i(0) & = & b_b(faux)$ par supposition$
-		\end{array}$\\
-		
-		
-		Si l'on r\'ep\`ete les m\^emes op\'erations avec 1 et 2. On obtient le syst\`eme suivant :
-$\begin{cases} b_i(0) = b_b(vrai) \lor b_i(0) = b_b(faux) \\ b_i(1) = b_b(vrai) \lor b_i(1) = b_b(faux) \\ b_i(2) = b_b(vrai) \lor b_i(2) = b_b(faux)\end{cases} $
-
-ce qui est \'equivalent \`a
-
-$\begin{array}{lclclc}
-& b_i(0) = b_i(1) & \lor & b_i(1) = b_i(2)&  \lor & b_i(0) = b_i(2) \\ \equiv &
- u_i(b_i(0)) = u_i(b_i(1))& \lor& u_i(b_i(1)) = u_i(b_i(2)) &\lor& u_i(b_i(0)) = u_i(b_i(2)) \\ \equiv &
- 0=1 & \lor & 1=2 & \lor & 0=2 
-
-\end{array}$
+\end{tikzpicture}
 
 \end{frame}
 
 
-\begin{frame}{Fonction boxing/unboxing du type tableau}
-Les fonctions de boxing et d'unboxing sont d\'efinies d\`es le d\'ebut aux SMT-solveurs. Il \'etait donc nec\'essaire d'avoir des fonctions de boxing/unboxing compatible avec tous les tableaux possibles et dont le type est d\'efini d\`es l e d\'ebut. 
 
-Ainsi, les fonctions ont \'et\'e impl\'ement\'ees pour manipuler un tableau avec \inductive{} comme type des indices et des \'el\'ements. Comme les fonctions de boxing existent pour tous les types de Z3, cette impl\'ementation permet \`a \verifast{} de d\'eclarer, d\`es le d\'ebut, la fonction et son type sans perdre l'aspect g\'en\'erique.
+
+\begin{frame}{Logique de sp\'ecification}
+\tikzset{every picture/.style={line width=0.75pt}} %set default line width to 0.75pt        
+
+\begin{tikzpicture}[x=0.75pt,y=0.75pt,yscale=-1,xscale=1]
+%uncomment if require: \path (0,498.23333740234375); %set diagram left start at 0, and has height of 498.23333740234375
+
+\draw    (129, 49.51) rectangle (317.82, 227.83)   ;
+\draw    (155.28,24.42) -- (155.28,49.78) ;
+\draw [shift={(155.28,49.78)}, rotate = 270] [color={rgb, 255:red, 0; green, 0; blue, 0 }  ]   (0,0) .. controls (3.31,-0.3) and (6.95,-1.4) .. (10.93,-3.29)(0,0) .. controls (3.31,0.3) and (6.95,1.4) .. (10.93,3.29)   ;
+
+\draw    (274.6,34.47) -- (274.52,49.78) ;
+\draw [shift={(274.52,49.78)}, rotate = 270.29] [color={rgb, 255:red, 0; green, 0; blue, 0 }  ]   (0,0) .. controls (3.31,-0.3) and (6.95,-1.4) .. (10.93,-3.29)(0,0) .. controls (3.31,0.3) and (6.95,1.4) .. (10.93,3.29)   ;
+
+\draw    (174.57, 62.49) rectangle (275.28, 86.08)   ;
+\draw    (155.28,49.78) -- (224.93,62.49) ;
+\draw [shift={(224.93,62.49)}, rotate = 190.34] [color={rgb, 255:red, 0; green, 0; blue, 0 }  ]   (0,0) .. controls (3.31,-0.3) and (6.95,-1.4) .. (10.93,-3.29)(0,0) .. controls (3.31,0.3) and (6.95,1.4) .. (10.93,3.29)   ;
+
+\draw    (274.52,49.78) -- (224.93,62.49) ;
+\draw [shift={(224.93,62.49)}, rotate = 345.64] [color={rgb, 255:red, 0; green, 0; blue, 0 }  ]   (0,0) .. controls (3.31,-0.3) and (6.95,-1.4) .. (10.93,-3.29)(0,0) .. controls (3.31,0.3) and (6.95,1.4) .. (10.93,3.29)   ;
+
+\draw    (224.93,86.08) -- (225.15,98.15) ;
+\draw [shift={(225.15,98.15)}, rotate = 268.92] [color={rgb, 255:red, 0; green, 0; blue, 0 }  ]   (0,0) .. controls (3.31,-0.3) and (6.95,-1.4) .. (10.93,-3.29)(0,0) .. controls (3.31,0.3) and (6.95,1.4) .. (10.93,3.29)   ;
+
+\draw    (174.8, 98.15) rectangle (275.51, 121.75)   ;
+\draw    (225.15,121.75) -- (225.38,133.82) ;
+\draw [shift={(225.38,133.82)}, rotate = 268.92] [color={rgb, 255:red, 0; green, 0; blue, 0 }  ]   (0,0) .. controls (3.31,-0.3) and (6.95,-1.4) .. (10.93,-3.29)(0,0) .. controls (3.31,0.3) and (6.95,1.4) .. (10.93,3.29)   ;
+
+\draw    (175.03, 133.82) rectangle (277.56, 183.18)   ;
+\draw    (226.14,182.42) -- (226.37,194.49) ;
+\draw [shift={(226.37,194.49)}, rotate = 268.92] [color={rgb, 255:red, 0; green, 0; blue, 0 }  ]   (0,0) .. controls (3.31,-0.3) and (6.95,-1.4) .. (10.93,-3.29)(0,0) .. controls (3.31,0.3) and (6.95,1.4) .. (10.93,3.29)   ;
+
+\draw    (170.7, 194.49) rectangle (276.04, 218.09)   ;
+\draw    (200.09, 263.87) rectangle (246.42, 287.47)   ;
+\draw    (222.88,246.56) -- (223.26,263.87) ;
+\draw [shift={(223.26,263.87)}, rotate = 268.74] [color={rgb, 255:red, 0; green, 0; blue, 0 }  ]   (0,0) .. controls (3.31,-0.3) and (6.95,-1.4) .. (10.93,-3.29)(0,0) .. controls (3.31,0.3) and (6.95,1.4) .. (10.93,3.29)   ;
+
+\draw    (223.37,218.09) -- (223.75,235.4) ;
+\draw [shift={(223.75,235.4)}, rotate = 268.74] [color={rgb, 255:red, 0; green, 0; blue, 0 }  ]   (0,0) .. controls (3.31,-0.3) and (6.95,-1.4) .. (10.93,-3.29)(0,0) .. controls (3.31,0.3) and (6.95,1.4) .. (10.93,3.29)   ;
+
+
+\draw (153.34,16.43) node  [align=left] {{\footnotesize C}};
+\draw (274.07,16.83) node  [align=left] {{\footnotesize Annotations}\\
+{\footnotesize (logique de s\'eparation)}};
+\draw (223.94,73.69) node  [align=left,color=red] {{\footnotesize Parsing}};
+\draw (226.22,109.08) node  [align=left] {{\footnotesize Typing}};
+\draw (230.02,156.71) node  [align=left] {{\footnotesize G\'en\'eration des }\\{\footnotesize conditions de }\\{\footnotesize verification}};
+\draw (226.22,205.53) node  [align=left] {{\footnotesize Boxing}};
+\draw (223.18,273.01) node  [align=left] {{\footnotesize Z3}};
+\draw (224.42,239.25) node  [align=left] {{\footnotesize Logique du premier ordre }};
+\draw (424.42,73.25) node  [align=left] {{\footnotesize La syntaxe du type tableau est :}\\{\footnotesize "$array(\sigma_I,\sigma_E$)"}};
+\draw (444.42,130.08) node  [align=left] {{\footnotesize Par exemple un tableau qui associe des} \\{\footnotesize entiers \`a des bool\'eens s'\'ecrit}\\{\footnotesize "array(int,bool)"}};
+
+\end{tikzpicture}
 \end{frame}
+
+
+
+
+
+\begin{frame}{Logique de sp\'ecification 2}
+
+\tikzset{every picture/.style={line width=0.75pt}} %set default line width to 0.75pt        
+
+\begin{tikzpicture}[x=0.75pt,y=0.75pt,yscale=-1,xscale=1]
+%uncomment if require: \path (0,498.23333740234375); %set diagram left start at 0, and has height of 498.23333740234375
+
+\draw    (129, 49.51) rectangle (317.82, 227.83)   ;
+\draw    (155.28,24.42) -- (155.28,49.78) ;
+\draw [shift={(155.28,49.78)}, rotate = 270] [color={rgb, 255:red, 0; green, 0; blue, 0 }  ]   (0,0) .. controls (3.31,-0.3) and (6.95,-1.4) .. (10.93,-3.29)(0,0) .. controls (3.31,0.3) and (6.95,1.4) .. (10.93,3.29)   ;
+
+\draw    (274.6,34.47) -- (274.52,49.78) ;
+\draw [shift={(274.52,49.78)}, rotate = 270.29] [color={rgb, 255:red, 0; green, 0; blue, 0 }  ]   (0,0) .. controls (3.31,-0.3) and (6.95,-1.4) .. (10.93,-3.29)(0,0) .. controls (3.31,0.3) and (6.95,1.4) .. (10.93,3.29)   ;
+
+\draw    (174.57, 62.49) rectangle (275.28, 86.08)   ;
+\draw    (155.28,49.78) -- (224.93,62.49) ;
+\draw [shift={(224.93,62.49)}, rotate = 190.34] [color={rgb, 255:red, 0; green, 0; blue, 0 }  ]   (0,0) .. controls (3.31,-0.3) and (6.95,-1.4) .. (10.93,-3.29)(0,0) .. controls (3.31,0.3) and (6.95,1.4) .. (10.93,3.29)   ;
+
+\draw    (274.52,49.78) -- (224.93,62.49) ;
+\draw [shift={(224.93,62.49)}, rotate = 345.64] [color={rgb, 255:red, 0; green, 0; blue, 0 }  ]   (0,0) .. controls (3.31,-0.3) and (6.95,-1.4) .. (10.93,-3.29)(0,0) .. controls (3.31,0.3) and (6.95,1.4) .. (10.93,3.29)   ;
+
+\draw    (224.93,86.08) -- (225.15,98.15) ;
+\draw [shift={(225.15,98.15)}, rotate = 268.92] [color={rgb, 255:red, 0; green, 0; blue, 0 }  ]   (0,0) .. controls (3.31,-0.3) and (6.95,-1.4) .. (10.93,-3.29)(0,0) .. controls (3.31,0.3) and (6.95,1.4) .. (10.93,3.29)   ;
+
+\draw    (174.8, 98.15) rectangle (275.51, 121.75)   ;
+\draw    (225.15,121.75) -- (225.38,133.82) ;
+\draw [shift={(225.38,133.82)}, rotate = 268.92] [color={rgb, 255:red, 0; green, 0; blue, 0 }  ]   (0,0) .. controls (3.31,-0.3) and (6.95,-1.4) .. (10.93,-3.29)(0,0) .. controls (3.31,0.3) and (6.95,1.4) .. (10.93,3.29)   ;
+
+\draw    (175.03, 133.82) rectangle (277.56, 183.18)   ;
+\draw    (226.14,182.42) -- (226.37,194.49) ;
+\draw [shift={(226.37,194.49)}, rotate = 268.92] [color={rgb, 255:red, 0; green, 0; blue, 0 }  ]   (0,0) .. controls (3.31,-0.3) and (6.95,-1.4) .. (10.93,-3.29)(0,0) .. controls (3.31,0.3) and (6.95,1.4) .. (10.93,3.29)   ;
+
+\draw    (170.7, 194.49) rectangle (276.04, 218.09)   ;
+\draw    (200.09, 263.87) rectangle (246.42, 287.47)   ;
+\draw    (222.88,246.56) -- (223.26,263.87) ;
+\draw [shift={(223.26,263.87)}, rotate = 268.74] [color={rgb, 255:red, 0; green, 0; blue, 0 }  ]   (0,0) .. controls (3.31,-0.3) and (6.95,-1.4) .. (10.93,-3.29)(0,0) .. controls (3.31,0.3) and (6.95,1.4) .. (10.93,3.29)   ;
+
+\draw    (223.37,218.09) -- (223.75,235.4) ;
+\draw [shift={(223.75,235.4)}, rotate = 268.74] [color={rgb, 255:red, 0; green, 0; blue, 0 }  ]   (0,0) .. controls (3.31,-0.3) and (6.95,-1.4) .. (10.93,-3.29)(0,0) .. controls (3.31,0.3) and (6.95,1.4) .. (10.93,3.29)   ;
+
+
+\draw (153.34,16.43) node  [align=left] {{\footnotesize C}};
+\draw (274.07,16.83) node  [align=left] {{\footnotesize Annotations}\\
+{\footnotesize (logique de s\'eparation)}};
+\draw (223.94,73.69) node  [align=left] {{\footnotesize Parsing}};
+\draw (226.22,109.08) node  [align=left,color=red] {{\footnotesize Typing}};
+\draw (230.02,156.71) node  [align=left] {{\footnotesize G\'en\'eration des }\\{\footnotesize conditions de }\\{\footnotesize verification}};
+\draw (226.22,205.53) node  [align=left] {{\footnotesize Boxing}};
+\draw (223.18,273.01) node  [align=left] {{\footnotesize Z3}};
+\draw (224.42,239.25) node  [align=left] {{\footnotesize Logique du premier ordre }};
+\draw (424.42,73.25) node  [align=left] {{\footnotesize Le typing est une phase v\'erifiant}\\ {\footnotesize la coh\'erence des types.}};
+\draw (427.42,133.25) node [align=left] {{\footnotesize Les tableaux, seuls, ne posent pas }\\{\footnotesize de probl\`eme de coh\'erence.}};
+\draw (414.42,193.25) node [align=left] {{\footnotesize Pour certaines utilisations, il}\\{\footnotesize faut v\'erifier la finitude}\\{\footnotesize ou l'habitation du type.}};
+
+\end{tikzpicture}
+
+\end{frame}
+
+
+
+
+\begin{frame}{Logique du premier ordre de \verifast}
+
+\tikzset{every picture/.style={line width=0.75pt}} %set default line width to 0.75pt        
+
+\begin{tikzpicture}[x=0.75pt,y=0.75pt,yscale=-1,xscale=1]
+%uncomment if require: \path (0,498.23333740234375); %set diagram left start at 0, and has height of 498.23333740234375
+
+\draw    (129, 49.51) rectangle (317.82, 227.83)   ;
+\draw    (155.28,24.42) -- (155.28,49.78) ;
+\draw [shift={(155.28,49.78)}, rotate = 270] [color={rgb, 255:red, 0; green, 0; blue, 0 }  ]   (0,0) .. controls (3.31,-0.3) and (6.95,-1.4) .. (10.93,-3.29)(0,0) .. controls (3.31,0.3) and (6.95,1.4) .. (10.93,3.29)   ;
+
+\draw    (274.6,34.47) -- (274.52,49.78) ;
+\draw [shift={(274.52,49.78)}, rotate = 270.29] [color={rgb, 255:red, 0; green, 0; blue, 0 }  ]   (0,0) .. controls (3.31,-0.3) and (6.95,-1.4) .. (10.93,-3.29)(0,0) .. controls (3.31,0.3) and (6.95,1.4) .. (10.93,3.29)   ;
+
+\draw    (174.57, 62.49) rectangle (275.28, 86.08)   ;
+\draw    (155.28,49.78) -- (224.93,62.49) ;
+\draw [shift={(224.93,62.49)}, rotate = 190.34] [color={rgb, 255:red, 0; green, 0; blue, 0 }  ]   (0,0) .. controls (3.31,-0.3) and (6.95,-1.4) .. (10.93,-3.29)(0,0) .. controls (3.31,0.3) and (6.95,1.4) .. (10.93,3.29)   ;
+
+\draw    (274.52,49.78) -- (224.93,62.49) ;
+\draw [shift={(224.93,62.49)}, rotate = 345.64] [color={rgb, 255:red, 0; green, 0; blue, 0 }  ]   (0,0) .. controls (3.31,-0.3) and (6.95,-1.4) .. (10.93,-3.29)(0,0) .. controls (3.31,0.3) and (6.95,1.4) .. (10.93,3.29)   ;
+
+\draw    (224.93,86.08) -- (225.15,98.15) ;
+\draw [shift={(225.15,98.15)}, rotate = 268.92] [color={rgb, 255:red, 0; green, 0; blue, 0 }  ]   (0,0) .. controls (3.31,-0.3) and (6.95,-1.4) .. (10.93,-3.29)(0,0) .. controls (3.31,0.3) and (6.95,1.4) .. (10.93,3.29)   ;
+
+\draw    (174.8, 98.15) rectangle (275.51, 121.75)   ;
+\draw    (225.15,121.75) -- (225.38,133.82) ;
+\draw [shift={(225.38,133.82)}, rotate = 268.92] [color={rgb, 255:red, 0; green, 0; blue, 0 }  ]   (0,0) .. controls (3.31,-0.3) and (6.95,-1.4) .. (10.93,-3.29)(0,0) .. controls (3.31,0.3) and (6.95,1.4) .. (10.93,3.29)   ;
+
+\draw    (175.03, 133.82) rectangle (277.56, 183.18)   ;
+\draw    (226.14,182.42) -- (226.37,194.49) ;
+\draw [shift={(226.37,194.49)}, rotate = 268.92] [color={rgb, 255:red, 0; green, 0; blue, 0 }  ]   (0,0) .. controls (3.31,-0.3) and (6.95,-1.4) .. (10.93,-3.29)(0,0) .. controls (3.31,0.3) and (6.95,1.4) .. (10.93,3.29)   ;
+
+\draw    (170.7, 194.49) rectangle (276.04, 218.09)   ;
+\draw    (200.09, 263.87) rectangle (246.42, 287.47)   ;
+\draw    (222.88,246.56) -- (223.26,263.87) ;
+\draw [shift={(223.26,263.87)}, rotate = 268.74] [color={rgb, 255:red, 0; green, 0; blue, 0 }  ]   (0,0) .. controls (3.31,-0.3) and (6.95,-1.4) .. (10.93,-3.29)(0,0) .. controls (3.31,0.3) and (6.95,1.4) .. (10.93,3.29)   ;
+
+\draw    (223.37,218.09) -- (223.75,235.4) ;
+\draw [shift={(223.75,235.4)}, rotate = 268.74] [color={rgb, 255:red, 0; green, 0; blue, 0 }  ]   (0,0) .. controls (3.31,-0.3) and (6.95,-1.4) .. (10.93,-3.29)(0,0) .. controls (3.31,0.3) and (6.95,1.4) .. (10.93,3.29)   ;
+
+
+\draw (153.34,16.43) node  [align=left] {{\footnotesize C}};
+\draw (274.07,16.83) node  [align=left] {{\footnotesize Annotations}\\
+{\footnotesize (logique de s\'eparation)}};
+\draw (223.94,73.69) node  [align=left] {{\footnotesize Parsing}};
+\draw (226.22,109.08) node  [align=left] {{\footnotesize Typing}};
+\draw (230.02,156.71) node  [align=left] {{\footnotesize G\'en\'eration des }\\{\footnotesize conditions de }\\{\footnotesize verification}};
+\draw (226.22,205.53) node  [align=left] {{\footnotesize Boxing}};
+\draw (223.18,273.01) node  [align=left] {{\footnotesize Z3}};
+\draw (224.42,239.25) node  [align=left,color=red] {{\footnotesize Logique du premier ordre }};
+\draw (430.94,63.69) node  [align=left] {{\footnotesize $\Sigma^s$ = (inductive,int,real,boolean)}\\{\footnotesize $\Sigma^f$ = ($boxed_{int}$,$unboxed_{int}$,...,+,-,...)}};
+\draw (435.94,120.69) node [align=left] {{\footnotesize Le type inductive repr\'esente plusieurs types}\\{\footnotesize dont les types g\'en\'eriques.}};
+\draw (408.94,180.69) node [align=left] {{\footnotesize Utilisation de fonction de boxing}\\{\footnotesize et d'unboxing}};
+\end{tikzpicture}
+
+\end{frame}
+
+
+\begin{frame}{Boxing}
+
+\tikzset{every picture/.style={line width=0.75pt}} %set default line width to 0.75pt        
+
+\begin{tikzpicture}[x=0.75pt,y=0.75pt,yscale=-1,xscale=1]
+%uncomment if require: \path (0,498.23333740234375); %set diagram left start at 0, and has height of 498.23333740234375
+
+\draw    (129, 49.51) rectangle (317.82, 227.83)   ;
+\draw    (155.28,24.42) -- (155.28,49.78) ;
+\draw [shift={(155.28,49.78)}, rotate = 270] [color={rgb, 255:red, 0; green, 0; blue, 0 }  ]   (0,0) .. controls (3.31,-0.3) and (6.95,-1.4) .. (10.93,-3.29)(0,0) .. controls (3.31,0.3) and (6.95,1.4) .. (10.93,3.29)   ;
+
+\draw    (274.6,34.47) -- (274.52,49.78) ;
+\draw [shift={(274.52,49.78)}, rotate = 270.29] [color={rgb, 255:red, 0; green, 0; blue, 0 }  ]   (0,0) .. controls (3.31,-0.3) and (6.95,-1.4) .. (10.93,-3.29)(0,0) .. controls (3.31,0.3) and (6.95,1.4) .. (10.93,3.29)   ;
+
+\draw    (174.57, 62.49) rectangle (275.28, 86.08)   ;
+\draw    (155.28,49.78) -- (224.93,62.49) ;
+\draw [shift={(224.93,62.49)}, rotate = 190.34] [color={rgb, 255:red, 0; green, 0; blue, 0 }  ]   (0,0) .. controls (3.31,-0.3) and (6.95,-1.4) .. (10.93,-3.29)(0,0) .. controls (3.31,0.3) and (6.95,1.4) .. (10.93,3.29)   ;
+
+\draw    (274.52,49.78) -- (224.93,62.49) ;
+\draw [shift={(224.93,62.49)}, rotate = 345.64] [color={rgb, 255:red, 0; green, 0; blue, 0 }  ]   (0,0) .. controls (3.31,-0.3) and (6.95,-1.4) .. (10.93,-3.29)(0,0) .. controls (3.31,0.3) and (6.95,1.4) .. (10.93,3.29)   ;
+
+\draw    (224.93,86.08) -- (225.15,98.15) ;
+\draw [shift={(225.15,98.15)}, rotate = 268.92] [color={rgb, 255:red, 0; green, 0; blue, 0 }  ]   (0,0) .. controls (3.31,-0.3) and (6.95,-1.4) .. (10.93,-3.29)(0,0) .. controls (3.31,0.3) and (6.95,1.4) .. (10.93,3.29)   ;
+
+\draw    (174.8, 98.15) rectangle (275.51, 121.75)   ;
+\draw    (225.15,121.75) -- (225.38,133.82) ;
+\draw [shift={(225.38,133.82)}, rotate = 268.92] [color={rgb, 255:red, 0; green, 0; blue, 0 }  ]   (0,0) .. controls (3.31,-0.3) and (6.95,-1.4) .. (10.93,-3.29)(0,0) .. controls (3.31,0.3) and (6.95,1.4) .. (10.93,3.29)   ;
+
+\draw    (175.03, 133.82) rectangle (277.56, 183.18)   ;
+\draw    (226.14,182.42) -- (226.37,194.49) ;
+\draw [shift={(226.37,194.49)}, rotate = 268.92] [color={rgb, 255:red, 0; green, 0; blue, 0 }  ]   (0,0) .. controls (3.31,-0.3) and (6.95,-1.4) .. (10.93,-3.29)(0,0) .. controls (3.31,0.3) and (6.95,1.4) .. (10.93,3.29)   ;
+
+\draw    (170.7, 194.49) rectangle (276.04, 218.09)   ;
+\draw    (200.09, 263.87) rectangle (246.42, 287.47)   ;
+\draw    (222.88,246.56) -- (223.26,263.87) ;
+\draw [shift={(223.26,263.87)}, rotate = 268.74] [color={rgb, 255:red, 0; green, 0; blue, 0 }  ]   (0,0) .. controls (3.31,-0.3) and (6.95,-1.4) .. (10.93,-3.29)(0,0) .. controls (3.31,0.3) and (6.95,1.4) .. (10.93,3.29)   ;
+
+\draw    (223.37,218.09) -- (223.75,235.4) ;
+\draw [shift={(223.75,235.4)}, rotate = 268.74] [color={rgb, 255:red, 0; green, 0; blue, 0 }  ]   (0,0) .. controls (3.31,-0.3) and (6.95,-1.4) .. (10.93,-3.29)(0,0) .. controls (3.31,0.3) and (6.95,1.4) .. (10.93,3.29)   ;
+
+
+\draw (153.34,16.43) node  [align=left] {{\footnotesize C}};
+\draw (274.07,16.83) node  [align=left] {{\footnotesize Annotations}\\
+{\footnotesize (logique de s\'eparation)}};
+\draw (223.94,73.69) node  [align=left] {{\footnotesize Parsing}};
+\draw (226.22,109.08) node  [align=left] {{\footnotesize Typing}};
+\draw (230.02,156.71) node  [align=left] {{\footnotesize G\'en\'eration des }\\{\footnotesize conditions de }\\{\footnotesize verification}};
+\draw (226.22,205.53) node  [align=left,color=red] {{\footnotesize Boxing}};
+\draw (223.18,273.01) node  [align=left] {{\footnotesize Z3}};
+\draw (224.42,239.25) node  [align=left] {{\footnotesize Logique du premier ordre }};
+\draw (396.42,93.25) node  [align=left] {{\footnotesize $boxed_{\sigma}$ : $\sigma$ $\rightarrow$ inductive}};
+\draw (434.42,133.25) node  [align=left] {{\footnotesize $boxed_{array}$ :  }\\ {\footnotesize array(inductive,inductive) $\rightarrow$ inductive}};
+\draw (404.42,163.25) node  [align=left] {{\footnotesize $unboxed_\sigma$ $\circ$ $boxed_\sigma$ = id }};
+\draw (439.42,193.25) node  [align=left] {{\footnotesize $boxed_\sigma$ $\circ$ $unboxed_\sigma$ = id si $\sigma$ est infini}};
+
+\end{tikzpicture}
+
+\end{frame}
+
+
+
+
 
 \begin{frame}{Ajout des fonctions}
-Pour terminer l'impl\'ementation, il faut maintenant ajouter les fonctions select, store, constant\_array et array\_ext (extensionalit\'e). Il y a deux \'etapes : 
+Pour terminer l'impl\'ementation, il faut ajouter les fonctions de la th\'eorie. Il y a deux \'etapes : 
 	\begin{itemize}
-		\item La premi\`ere est de choisir comment repr\'esenter  et r\'ecup\'erer ces fonctions dans le code de \verifast{}. 
-		\item La deuxi\`eme est de d\'efinir comment ces fonctions vont \^etre communiqu\'ees \`a Z3.
+		\item Les int\'egrer \`a la logique de sp\'ecification. 
+		\item Les relier aux fonctions de Z3.
 	\end{itemize}
 \end{frame}
 
-\begin{frame}{Repr\'esentation pour les utilisateurs}
 
-	Une r\`egle importante dans \verifast{} est que deux fixpoints, pr\'edicats ou lemme ne peuvent pas avoir un nom identique. Elle permet \`a \verifast{} de d\'eclarer toutes les primitives dans des biblioth\`eques annexes.
-	
-	Il fallait ajouter les fonctions de la th\'eorie des tableaux sans nuire aux anciennes preuves.  
-	
-	Une nouvelle biblioth\`eque pour la th\'eorie des tableaux a donc \'et\'e cr\'e\'ee. Ainsi, les anciennes preuves n'incluant pas cette nouvelle biblioth\`eque et utilisant les noms des fonctions de la th\'eorie sont toujours valide.
+
+
+
+
+\begin{frame}{Fonction dans la logique de sp\'ecification}
+\tikzset{every picture/.style={line width=0.75pt}} %set default line width to 0.75pt        
+
+\begin{tikzpicture}[x=0.75pt,y=0.75pt,yscale=-1,xscale=1]
+%uncomment if require: \path (0,498.23333740234375); %set diagram left start at 0, and has height of 498.23333740234375
+
+\draw    (129, 49.51) rectangle (317.82, 227.83)   ;
+\draw    (155.28,24.42) -- (155.28,49.78) ;
+\draw [shift={(155.28,49.78)}, rotate = 270] [color={rgb, 255:red, 0; green, 0; blue, 0 }  ]   (0,0) .. controls (3.31,-0.3) and (6.95,-1.4) .. (10.93,-3.29)(0,0) .. controls (3.31,0.3) and (6.95,1.4) .. (10.93,3.29)   ;
+
+\draw    (274.6,34.47) -- (274.52,49.78) ;
+\draw [shift={(274.52,49.78)}, rotate = 270.29] [color={rgb, 255:red, 0; green, 0; blue, 0 }  ]   (0,0) .. controls (3.31,-0.3) and (6.95,-1.4) .. (10.93,-3.29)(0,0) .. controls (3.31,0.3) and (6.95,1.4) .. (10.93,3.29)   ;
+
+\draw    (174.57, 62.49) rectangle (275.28, 86.08)   ;
+\draw    (155.28,49.78) -- (224.93,62.49) ;
+\draw [shift={(224.93,62.49)}, rotate = 190.34] [color={rgb, 255:red, 0; green, 0; blue, 0 }  ]   (0,0) .. controls (3.31,-0.3) and (6.95,-1.4) .. (10.93,-3.29)(0,0) .. controls (3.31,0.3) and (6.95,1.4) .. (10.93,3.29)   ;
+
+\draw    (274.52,49.78) -- (224.93,62.49) ;
+\draw [shift={(224.93,62.49)}, rotate = 345.64] [color={rgb, 255:red, 0; green, 0; blue, 0 }  ]   (0,0) .. controls (3.31,-0.3) and (6.95,-1.4) .. (10.93,-3.29)(0,0) .. controls (3.31,0.3) and (6.95,1.4) .. (10.93,3.29)   ;
+
+\draw    (224.93,86.08) -- (225.15,98.15) ;
+\draw [shift={(225.15,98.15)}, rotate = 268.92] [color={rgb, 255:red, 0; green, 0; blue, 0 }  ]   (0,0) .. controls (3.31,-0.3) and (6.95,-1.4) .. (10.93,-3.29)(0,0) .. controls (3.31,0.3) and (6.95,1.4) .. (10.93,3.29)   ;
+
+\draw    (174.8, 98.15) rectangle (275.51, 121.75)   ;
+\draw    (225.15,121.75) -- (225.38,133.82) ;
+\draw [shift={(225.38,133.82)}, rotate = 268.92] [color={rgb, 255:red, 0; green, 0; blue, 0 }  ]   (0,0) .. controls (3.31,-0.3) and (6.95,-1.4) .. (10.93,-3.29)(0,0) .. controls (3.31,0.3) and (6.95,1.4) .. (10.93,3.29)   ;
+
+\draw    (175.03, 133.82) rectangle (277.56, 183.18)   ;
+\draw    (226.14,182.42) -- (226.37,194.49) ;
+\draw [shift={(226.37,194.49)}, rotate = 268.92] [color={rgb, 255:red, 0; green, 0; blue, 0 }  ]   (0,0) .. controls (3.31,-0.3) and (6.95,-1.4) .. (10.93,-3.29)(0,0) .. controls (3.31,0.3) and (6.95,1.4) .. (10.93,3.29)   ;
+
+\draw    (170.7, 194.49) rectangle (276.04, 218.09)   ;
+\draw    (200.09, 263.87) rectangle (246.42, 287.47)   ;
+\draw    (222.88,246.56) -- (223.26,263.87) ;
+\draw [shift={(223.26,263.87)}, rotate = 268.74] [color={rgb, 255:red, 0; green, 0; blue, 0 }  ]   (0,0) .. controls (3.31,-0.3) and (6.95,-1.4) .. (10.93,-3.29)(0,0) .. controls (3.31,0.3) and (6.95,1.4) .. (10.93,3.29)   ;
+
+\draw    (223.37,218.09) -- (223.75,235.4) ;
+\draw [shift={(223.75,235.4)}, rotate = 268.74] [color={rgb, 255:red, 0; green, 0; blue, 0 }  ]   (0,0) .. controls (3.31,-0.3) and (6.95,-1.4) .. (10.93,-3.29)(0,0) .. controls (3.31,0.3) and (6.95,1.4) .. (10.93,3.29)   ;
+
+
+\draw (153.34,16.43) node  [align=left] {{\footnotesize C}};
+\draw (274.07,16.83) node  [align=left,color=red] {{\footnotesize Annotations}\\
+{\footnotesize (logique de s\'eparation)}};
+\draw (223.94,73.69) node  [align=left] {{\footnotesize Parsing}};
+\draw (226.22,109.08) node  [align=left] {{\footnotesize Typing}};
+\draw (230.02,156.71) node  [align=left] {{\footnotesize G\'en\'eration des }\\{\footnotesize conditions de }\\{\footnotesize verification}};
+\draw (226.22,205.53) node  [align=left] {{\footnotesize Boxing}};
+\draw (223.18,273.01) node  [align=left] {{\footnotesize Z3}};
+\draw (224.42,239.25) node  [align=left] {{\footnotesize Logique du premier ordre }};
+\draw (428.42,73.25) node  [align=left] {{\footnotesize Deux fixpoints, pr\'edicats ou lemme  }\\ {\footnotesize ne peuvent pas avoir un nom identique.}};
+\draw (420.42,133.08) node  [align=left] {{\footnotesize Cr\'eation d'une nouvelle biblioth\`eque}};
+
+\end{tikzpicture}
 \end{frame}
 
-\begin{frame}{Recup\'erer les fonctions}
-Les fonctions sont donc repr\'esent\'ees comme des fonctions classiques. Or, l'objectif du TRE est de connecter les fonctions de la th\'eorie des tableaux aux primitives de cette m\^eme th\'eorie dans Z3. Il faut donc trouver un moyen de r\'ecup\'erer ces fonctions avant qu'elles soient transmis \`a Z3 comme des fonctions classiques.
 
-La premi\`ere id\'ee f\^ut de modifier le parseur. Le d\'efaut est que le parseur \'etant la premi\`ere \'etape de \verifast. Un nombre important d'\'etapes allait devoir \^etre modifier.
 
-La deuxi\`eme id\'ee f\^ut de chercher la v\'erification la plus tardive o\`u toutes les fonctions vont appara\^itre et faire un pattern-matching sur leurs noms.
 
-Une fois les fonctions rep\'er\'ees, il ne reste qu'\`a faire un appel de fonction aux fonctions de Z3.
 
+\begin{frame}{Liaison avec Z3}
+\tikzset{every picture/.style={line width=0.75pt}} %set default line width to 0.75pt        
+
+\begin{tikzpicture}[x=0.75pt,y=0.75pt,yscale=-1,xscale=1]
+%uncomment if require: \path (0,498.23333740234375); %set diagram left start at 0, and has height of 498.23333740234375
+
+\draw    (129, 49.51) rectangle (317.82, 227.83)   ;
+\draw    (155.28,24.42) -- (155.28,49.78) ;
+\draw [shift={(155.28,49.78)}, rotate = 270] [color={rgb, 255:red, 0; green, 0; blue, 0 }  ]   (0,0) .. controls (3.31,-0.3) and (6.95,-1.4) .. (10.93,-3.29)(0,0) .. controls (3.31,0.3) and (6.95,1.4) .. (10.93,3.29)   ;
+
+\draw    (274.6,34.47) -- (274.52,49.78) ;
+\draw [shift={(274.52,49.78)}, rotate = 270.29] [color={rgb, 255:red, 0; green, 0; blue, 0 }  ]   (0,0) .. controls (3.31,-0.3) and (6.95,-1.4) .. (10.93,-3.29)(0,0) .. controls (3.31,0.3) and (6.95,1.4) .. (10.93,3.29)   ;
+
+\draw    (174.57, 62.49) rectangle (275.28, 86.08)   ;
+\draw    (155.28,49.78) -- (224.93,62.49) ;
+\draw [shift={(224.93,62.49)}, rotate = 190.34] [color={rgb, 255:red, 0; green, 0; blue, 0 }  ]   (0,0) .. controls (3.31,-0.3) and (6.95,-1.4) .. (10.93,-3.29)(0,0) .. controls (3.31,0.3) and (6.95,1.4) .. (10.93,3.29)   ;
+
+\draw    (274.52,49.78) -- (224.93,62.49) ;
+\draw [shift={(224.93,62.49)}, rotate = 345.64] [color={rgb, 255:red, 0; green, 0; blue, 0 }  ]   (0,0) .. controls (3.31,-0.3) and (6.95,-1.4) .. (10.93,-3.29)(0,0) .. controls (3.31,0.3) and (6.95,1.4) .. (10.93,3.29)   ;
+
+\draw    (224.93,86.08) -- (225.15,98.15) ;
+\draw [shift={(225.15,98.15)}, rotate = 268.92] [color={rgb, 255:red, 0; green, 0; blue, 0 }  ]   (0,0) .. controls (3.31,-0.3) and (6.95,-1.4) .. (10.93,-3.29)(0,0) .. controls (3.31,0.3) and (6.95,1.4) .. (10.93,3.29)   ;
+
+\draw    (174.8, 98.15) rectangle (275.51, 121.75)   ;
+\draw    (225.15,121.75) -- (225.38,133.82) ;
+\draw [shift={(225.38,133.82)}, rotate = 268.92] [color={rgb, 255:red, 0; green, 0; blue, 0 }  ]   (0,0) .. controls (3.31,-0.3) and (6.95,-1.4) .. (10.93,-3.29)(0,0) .. controls (3.31,0.3) and (6.95,1.4) .. (10.93,3.29)   ;
+
+\draw    (175.03, 133.82) rectangle (277.56, 183.18)   ;
+\draw    (226.14,182.42) -- (226.37,194.49) ;
+\draw [shift={(226.37,194.49)}, rotate = 268.92] [color={rgb, 255:red, 0; green, 0; blue, 0 }  ]   (0,0) .. controls (3.31,-0.3) and (6.95,-1.4) .. (10.93,-3.29)(0,0) .. controls (3.31,0.3) and (6.95,1.4) .. (10.93,3.29)   ;
+
+\draw    (170.7, 194.49) rectangle (276.04, 218.09)   ;
+\draw    (200.09, 263.87) rectangle (246.42, 287.47)   ;
+\draw    (222.88,246.56) -- (223.26,263.87) ;
+\draw [shift={(223.26,263.87)}, rotate = 268.74] [color={rgb, 255:red, 0; green, 0; blue, 0 }  ]   (0,0) .. controls (3.31,-0.3) and (6.95,-1.4) .. (10.93,-3.29)(0,0) .. controls (3.31,0.3) and (6.95,1.4) .. (10.93,3.29)   ;
+
+\draw [color=red]  (223.37,218.09) -- (223.75,235.4) ;
+\draw [shift={(223.75,235.4)}, rotate = 268.74] [color=red]   (0,0) .. controls (3.31,-0.3) and (6.95,-1.4) .. (10.93,-3.29)(0,0) .. controls (3.31,0.3) and (6.95,1.4) .. (10.93,3.29)   ;
+
+
+\draw (153.34,16.43) node  [align=left] {{\footnotesize C}};
+\draw (274.07,16.83) node  [align=left] {{\footnotesize Annotations}\\
+{\footnotesize (logique de s\'eparation)}};
+\draw (223.94,73.69) node  [align=left] {{\footnotesize Parsing}};
+\draw (226.22,109.08) node  [align=left] {{\footnotesize Typing}};
+\draw (230.02,156.71) node  [align=left] {{\footnotesize G\'en\'eration des }\\{\footnotesize conditions de }\\{\footnotesize verification}};
+\draw (226.22,205.53) node  [align=left] {{\footnotesize Boxing}};
+\draw (223.18,273.01) node  [align=left] {{\footnotesize Z3}};
+\draw (224.42,239.25) node  [align=left] {{\footnotesize Logique du premier ordre }};
+
+\end{tikzpicture}
 \end{frame}
 
-\begin{frame}{Biblioth\`eques}
-Deux biblioth\`eques ont \'et\'e ajout\'ees, une biblioth\`eque pour la th\'eorie des th\'eories des tableaux et une pour les multi-ensembles.
+
+
+
+
+
+
+\section{Biblioth\`eques des tableaux et multi-ensembles}
+
+\begin{frame}[noframenumbering,plain]
+\tableofcontents[currentsection]
 \end{frame}
 
 \begin{frame}[fragile]{Biblioth\`eques de la th\'eorie des tableaux}
-Les fonctions et les axiomes de la th\'eorie sont les suivant :
+
 			\begin{lstlisting}[basicstyle=\footnotesize]
+			
 fixpoint u select<t,u> (array(t,u) arr, t x);
 fixpoint array(t, u) store<t, u> (array(t, u) arr, t x, u y);
 fixpoint array(t, u) constant_array<t,u> (u v);
@@ -439,7 +771,8 @@ lemma void select_store<t,u> (array(t,u) arr, t x, u y, t z)
     		== ((x == z) ? y : select (arr, z));
   {}
     		
-lemma void array_extensionality<t, u>(array(t, u) a, array(t, u) b)
+lemma void array_extensionality<t, u>(array(t, u) a,
+                                       array(t, u) b)
   requires select(a, array_ext<t, u>(a, b)) 
 		== select(b, array_ext<t, u>(a, b));
   ensures a == b;
@@ -448,11 +781,13 @@ lemma void array_extensionality<t, u>(array(t, u) a, array(t, u) b)
 \end{frame}
 
 \begin{frame}[fragile]{Biblioth\`eques de la th\'eorie des tableaux 2}
-Les derniers pr\'edicats et lemmes majeurs de la biblioth\`eque sont le pr\'edicat $array\_model($int* a, int b, int e, array(int,int) arr$)$ repr\'esentant un tableau $a$ entre (a+b) et (a+e) par le tableau arr et le lemme $array\_model\_init(int*,int)$ transformant une liste d'entier en un tableau d'entier. Les pr\'edicats $integer(int*,int)$ et $ints(int*,int,list)$ utilis\'es ci-dessous repr\'esentent, respectivement, un pointeur d'entier et une liste d'entiers.
+
 			\begin{lstlisting}[basicstyle=\footnotesize]
-predicate array_model (int* a, int b, int e, array(int,int) arr) =
-  (b >= e) ? true : (integer(a+b,?v) &*& select(arr, b) == v 
-  			&*& array_model(a, b+1, e, arr));
+predicate array_model (int* a, int b, int e,
+                         array(int,int) arr) =
+  (b >= e) ? true : (integer(a+b,?v) 
+            &*& select(arr, b) == v 
+            &*& array_model(a, b+1, e, arr));
   			
 lemma void array_model_init(int* a, int length)
 requires ints(a, length, _) &*& length >= 0;
@@ -463,23 +798,23 @@ ensures array_model(a, 0, length, _);
 \end{frame}
 
 \begin{frame}[fragile]{Biblioth\`eque des multi-ensembles}
-	Les multi-ensembles sont repr\'esent\'es comme des tableaux avec des \'el\'ements de type $nat$.
+	
 			\begin{lstlisting}[basicstyle=\footnotesize]
-  inductive multiset<t> = mk_multiset (array(t, nat));
-			\end{lstlisting}
-			Les fonctions principales sont $multiset\_select$, $multiset\_empty$, $multiset\_add$, $multi\_ext$  et $array\_multiset$.
-			\begin{lstlisting}[basicstyle=\footnotesize]
+inductive multiset<t> = mk_multiset (array(t, nat));
+  
 fixpoint nat multiset_select<t>(multiset<t> m, t i)
 
 fixpoint multiset<t> empty_multiset<t>()
 
 fixpoint multiset<t> multiset_add<t>(multiset<t> m, t i)
 
-fixpoint multiset<int> array_multiset(int b, nat n, array(int,int) arr) 
+fixpoint multiset<int> array_multiset(int b, nat n,
+                                       array(int,int) arr) 
 
 lemma t multiset_ext<t>(multiset<t> m1, multiset<t> m2)
   requires m1 != m2;
-  ensures multiset_select(m1, result) != multiset_select(m2, result);
+  ensures multiset_select(m1, result) !=
+          multiset_select(m2, result);
   {...}
 			\end{lstlisting}
 			
@@ -487,82 +822,90 @@ lemma t multiset_ext<t>(multiset<t> m1, multiset<t> m2)
 \end{frame}
 
 \begin{frame}[fragile]{Biblioth\`eque des multi-ensembles 2}
-Le pr\'edicat le plus important de cette biblioth\`eque est $same\_multiset$(array(int,int) a1, array(int,int) a2, int b, int e$)$ indiquant que les tableaux $a1$ et $a2$ ont le m\^eme multi-ensemble d'\'el\'ements entre $b$ et $e$.
+
 	\begin{lstlisting}[basicstyle=\footnotesize]
-predicate same_multiset(array(int,int) a1, array(int,int) a2,
- int b, int e) =
+predicate same_multiset(array(int,int) a1, 
+                         array(int,int) a2, int b, int e) =
   array_multiset(b, nat_of_int(e-b), a1) == 
   array_multiset(b, nat_of_int(e-b), a2);
 	\end{lstlisting}
 \end{frame}
 
+\section{Quicksort}
+
+\begin{frame}[noframenumbering,plain]
+\tableofcontents[currentsection]
+\end{frame}
+
 \begin{frame}[fragile]{Rappel Quicksort}
 \begin{lstlisting}[basicstyle=\footnotesize]
 void swap (int* a, int i, int j)
-{
-  int b = *(a+i);
-  *(a+i) = *(a+j);
-  *(a+j) = b;
-}
-int partition (int* arr, int lo, int hi)
-{
-  int pivot = a[hi];
-  int i = lo - 1;
-  int j;
-  for (j = lo; j < hi; j++) {
-    if (a[j] < pivot) {
-      i++;
-      if (i < j) swap(a, i, j);
-    }
-  }
-  i++;
-  if (i < hi) swap(a, i, hi);
-  return i;
-}
-void quicksort (int* a, int lo, int hi)
-{
-  if (lo > hi) return;
-  int p = partition(a, lo, hi);
-  quicksort(a, lo, p-1);
-  quicksort(a, p+1, hi);
-}
+{int b = a[i];  a[i] = a[j];  a[j] = b;}
 
+int partition (int* arr, int lo, int hi)
+{ int pivot = a[hi]; int i = lo - 1; int j;
+  for (j = lo; j < hi; j++) {
+    if (a[j] < pivot) {i++; if (i < j) swap(a, i, j);}
+  }
+  i++; if (i < hi) swap(a, i, hi); return i;}
+  
+void quicksort (int* a, int lo, int hi)
+{if (lo > hi) return;
+ int p = partition(a, lo, hi);
+ quicksort(a, lo, p-1);
+ quicksort(a, p+1, hi);}
 		\end{lstlisting}
 
 \end{frame}
 
-\begin{frame}[fragile]{Swap Quicksort}
+
+
+
+
+\begin{frame}[fragile]{Sp\'ecification swap}
 	\begin{lstlisting}[basicstyle=\footnotesize]
+fixpoint array(int, int) array_swap(array(int, int) start,
+                                    int i, int j) {
+  return store(store(start, j, select(start, i)), 
+               i, select(start, j));
+}
+
 void swap (int* a, int i, int j)
   //@ requires array_model(a, ?b, ?e, ?start) &*&
                b <= i &*& i < j &*& j < e;
   //@ ensures array_model(a, b, e, array_swap(start, i, j));
 	\end{lstlisting}
-	La pr\'econdition cherche un pr\'edicat $array\_model$ dans le tas abstrait. $i$ et $j$ doivent \^etre bien d\'efini dans le pr\'edicat $array\_model$.
 	
-	La postcondition garantie que le tableau n'a pas chang\'e de place et que les valeurs aux indices $i$ et $j$ ont bien \'et\'e \'echang\'ees.
 \end{frame}
 
-\begin{frame}[fragile]{Partition Quicksort}
+
+
+
+
+
+\begin{frame}[fragile]{Sp\'ecification partition}
 	\begin{lstlisting}[basicstyle=\footnotesize]
 int partition (int* a, int lo, int hi)
-  //@ requires array_model(a, lo, hi, ?start) &*& 
-               lo <= hi &*& *(a+hi) |-> ?pivot &*& 
+  /*@ requires array_model(a, lo, hi+1, ?start) &*& 
+               lo <= hi &*&
                pivot == select(start, hi);
-  /*@ ensures array_model(a, lo, hi+1, ?end) &*& 
+      ensures array_model(a, lo, hi+1, ?end) &*& 
               same_multiset(start, end, lo, hi+1) &*&
               lo <= result &*& result <= hi &*&
               select(end, result) == pivot &*&
-              minore(end, lo, result, pivot) &*&
-              majore(end, result+1, hi+1, pivot); @*/
+              upper_bound(end, lo, result, pivot) &*&
+              lower_bound(end, result+1, hi+1, pivot); @*/
 	\end{lstlisting}
-	\textbf{Pr\'econdition} : Le tableau $a$ est bien d\'efini de $lo$ inclus jusqu'\`a $hi$ exclus et est repr\'esent\'e par $start$. Un entier est bien d\'efini \`a la case $hi$ et elle sera le pivot.
 	
-	\textbf{Postcondition} : Le tableau $a$ est bien d\'efini de $lo$ inclus jusqu'\`a $hi+1$ exclu et est repr\'esent\'e par $end$. La position du pivot est bien dans le tableau. Le pivot est bien \`a sa position. Le pivot est plus grand que les \'el\'ements du tableaux $end$ entre $lo$ inclus et $result$ exclu. Le pivot est plus petit que les \'el\'ements du tableaux $end$ entre $result+1$ inclus et $hi+1$ exclu.
 \end{frame}
 
-\begin{frame}[fragile]{Partition Quicksort 2}
-Dans \verifast, toutes les boucles sont annot\'ees par un invariant de boucle. Pour la fonction Partition, un invariant de boucle possible est celui-ci.
+
+
+
+
+
+
+\begin{frame}[fragile]{Sp\'ecification partition 2}
 	\begin{lstlisting}[basicstyle=\footnotesize]
 int pivot = a[hi];
 int i = lo - 1;
@@ -571,8 +914,9 @@ for (j = lo; j < hi; j++)
               lo <= j &*& j < hi+1 &*& 
               i < j &*& lo -1 <= i &*& 
               same_multiset(start, arr, lo, hi) &*& 
-              select(arr, hi) == p &*& minore(arr,lo,i+1,p) &*& 
-              majore(arr,i+1,j,p); @*/
+              select(arr, hi) == p &*&
+              upper_bound(arr,lo,i+1,p) &*& 
+              lower_bound(arr,i+1,j,p); @*/
 {
     if (a[j] < pivot) {
       i++;
@@ -585,4 +929,96 @@ return i;
 	\end{lstlisting}
 
 \end{frame}
+
+\begin{frame}[fragile]{Sp\'ecification quicksort}
+	\begin{lstlisting}[basicstyle=\footnotesize]
+void quicksort (int* a, int lo, int hi)
+  //@ requires array_model(a, lo, hi+1, ?start);
+  //@ ensures array_model(a, lo, hi+1, ?end) &*& 
+             same_multiset(start, end,lo,hi+1) &*& 
+             sorted(end,lo,hi+1);
+
+{
+  if (lo > hi) return;
+  int p = partition(a, lo, hi);
+  quicksort(a, lo, p-1);
+  quicksort(a, p+1, hi);
+}
+	\end{lstlisting}
+\end{frame}
+
+
+
+
+
+
+\begin{frame}[fragile]{Sp\'ecification quicksort 2}
+\begin{lstlisting}[basicstyle=\footnotesize]
+  int p = partition(a, lo, hi);
+  quicksort(a, lo, p-1);
+  quicksort(a, p+1, hi);
+	\end{lstlisting}
+	
+\tikzset{every picture/.style={line width=0.75pt}} %set default line width to 0.75pt        
+
+\begin{tikzpicture}[x=0.75pt,y=0.75pt,yscale=-1,xscale=1]
+%uncomment if require: \path (0,300); %set diagram left start at 0, and has height of 300
+
+\draw    (53.6, 44) rectangle (348.6, 68.47)   ;
+\draw    (356.6, 43) rectangle (406.6, 68.47)   ;
+\draw    (49.6, 91) rectangle (191.6, 113.47)   ;
+\draw    (201.6, 90.47) rectangle (246.6, 114.47)   ;
+\draw    (261, 91) rectangle (410.6, 113.47)   ;
+\draw    (206.6, 139.47) rectangle (246.6, 164.47)   ;
+\draw    (261.6, 139) rectangle (410.6, 163.47)   ;
+\draw    (44.6, 140) rectangle (193.6, 164.47)   ;
+\draw    (75.6,158.47) -- (109.6,143.47) ;
+\draw [shift={(109.6,143.47)}, rotate = 516.19] [color={rgb, 255:red, 0; green, 0; blue, 0 }  ]   (0,0) .. controls (3.31,-0.3) and (6.95,-1.4) .. (10.93,-3.29)(0,0) .. controls (3.31,0.3) and (6.95,1.4) .. (10.93,3.29)   ;
+
+\draw    (291.6,158.47) -- (325.6,143.47) ;
+\draw [shift={(325.6,143.47)}, rotate = 516.19] [color={rgb, 255:red, 0; green, 0; blue, 0 }  ]   (0,0) .. controls (3.31,-0.3) and (6.95,-1.4) .. (10.93,-3.29)(0,0) .. controls (3.31,0.3) and (6.95,1.4) .. (10.93,3.29)   ;
+
+\draw    (45.6, 179.47) rectangle (411.6, 208.47)   ;
+\draw    (197.6,201.47) -- (269.6,187.47) ;
+\draw [shift={(269.6,187.47)}, rotate = 529] [color={rgb, 255:red, 0; green, 0; blue, 0 }  ]   (0,0) .. controls (3.31,-0.3) and (6.95,-1.4) .. (10.93,-3.29)(0,0) .. controls (3.31,0.3) and (6.95,1.4) .. (10.93,3.29)   ;
+
+
+\draw (231,79) node   {$int\ p\ =\ partition( a,lo,hi)$};
+\draw (112.95,101) node   {$\leq $};
+\draw (335,99) node   {$\geq $};
+\draw (378,56) node  [align=left] {pivot};
+\draw (224,103) node  [align=left] {pivot};
+\draw (225,150) node  [align=left] {pivot};
+\draw (120,126) node   {$quicksort( a,lo,p−1)$};
+\draw (338,123) node   {$quicksort( a,p+1,hi)$};
+\draw (126.95,151) node   {$\leq $};
+\draw (353,146) node   {$\geq $};
+
+
+\end{tikzpicture}
+
+\end{frame}
+
+\section{Conclusion}
+
+\begin{frame}[noframenumbering,plain]
+\tableofcontents[currentsection]
+\end{frame}
+
+\begin{frame}{Conclusion}
+Travail accompli :
+\begin{itemize}
+\item J'ai am\'elior\'e l'automatisation de \verifast{} avec la th\'eorie des tableaux
+\item Les biblioth\`eques de la th\'eorie des tableaux et des multi-ensembles ont \'et\'e ajout\'ees.
+\item Le Quicksort a \'et\'e prouv\'e avec \verifast.
+\end{itemize}
+
+Suite possible :
+\begin{itemize}
+\item Prouver d'autre programme afin d'enrichir les biblioth\`eques.
+\item Ajouter des fonctions \`a la th\'eorie des tableaux.
+\item Ajouter d'autres th\'eories
+\end{itemize}
+\end{frame}
+
 \end{document}
