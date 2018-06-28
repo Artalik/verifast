@@ -121,7 +121,7 @@
 	\item Pas d'acc\'es ill\'egaux \`a la m\'emoire
 	\item Les contrats sont respect\'es. (pr\'e/postcondition) 
 \end{itemize}	
-Cette outil est bas\'e sur la logique de s\'eparation et r\'esout les \'enonc\'es math\'ematiques avec les SMT-solveurs Redux et Z3.
+Cet outil est bas\'e sur la logique de s\'eparation et r\'esout les \'enonc\'es math\'ematiques avec les SMT-solveurs Redux et Z3.
 \end{frame}
 
 
@@ -423,7 +423,7 @@ fixpoint int length_ints(ints l){
 \draw (223.18,273.01) node  [align=left] {{\footnotesize Z3}};
 \draw (224.42,239.25) node  [align=left] {{\footnotesize Logique du premier ordre }};
 \draw (424.42,73.25) node  [align=left] {{\footnotesize La syntaxe du type tableau est :}\\{\footnotesize "$array(\sigma_I,\sigma_E$)"}};
-\draw (444.42,130.08) node  [align=left] {{\footnotesize Par exemple un tableau qui associe des} \\{\footnotesize entiers \`a des bool\'eens s'\'ecrit}\\{\footnotesize "array(int,bool)"}};
+\draw (434.42,130.08) node  [align=left] {{\footnotesize Par exemple un tableau de bool\'eens} \\{\footnotesize index\'es par des entiers s'\'ecrit}\\{\footnotesize "array(int,bool)"}};
 
 \end{tikzpicture}
 \end{frame}
@@ -938,8 +938,8 @@ for (j = lo; j < hi; j++)
               i < j &*& lo -1 <= i &*& 
               same_multiset(start, arr, lo, hi) &*& 
               select(arr, hi) == p &*&
-              upper_bound(arr,lo,i+1,p) &*& 
-              lower_bound(arr,i+1,j,p); @*/
+              upper_bound(arr,lo,i+1,pivot) &*& 
+              lower_bound(arr,i+1,j,pivot); @*/
 {
     if (a[j] < pivot) {
       i++;
@@ -1012,7 +1012,7 @@ void quicksort (int* a, int lo, int hi)
 \draw (378,56) node  [align=left] {pivot};
 \draw (224,103) node  [align=left] {pivot};
 \draw (225,150) node  [align=left] {pivot};
-\draw (120,126) node   {$quicksort( a,lo,p−1)$};
+\draw (120,126) node   {$quicksort( a,lo,p-1)$};
 \draw (338,123) node   {$quicksort( a,p+1,hi)$};
 \draw (126.95,151) node   {$\leq $};
 \draw (353,146) node   {$\geq $};
