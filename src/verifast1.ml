@@ -44,7 +44,7 @@ module VerifyProgram1(VerifyProgramArgs: VERIFY_PROGRAM_ARGS) = struct
     option_enforce_annotations=enforce_annotations;
     option_allow_undeclared_struct_types;
     option_data_model=data_model;
-    option_disable_array_theory=disable_array_theory
+    option_disable_mapping_theory=disable_mapping_theory
   } = options
 
   let data_model = match language with Java -> data_model_java | CLang -> data_model
@@ -2767,9 +2767,9 @@ module VerifyProgram1(VerifyProgramArgs: VERIFY_PROGRAM_ARGS) = struct
          (unbox (StoreArray(l, e0, e1, e2)) t0 t, t, None)
       | "select", [e0; e1] ->
          (unbox (SelectArray(l, e0, e1)) t0 t, t, None)
-      | "constant_array", [e] ->
+      | "constant_mapping", [e] ->
          (unbox (ConstantArray(l, e)) t0 t, t, None)
-      | "array_ext", [e0; e1] ->
+      | "mapping_ext", [e0; e1] ->
          (unbox (ExtArray(l, e0, e1)) t0 t, t, None)
       | _ -> (unbox (WPureFunCall (l, g, targs, args)) t0 t, t, None)
     in
@@ -3119,7 +3119,7 @@ module VerifyProgram1(VerifyProgramArgs: VERIFY_PROGRAM_ARGS) = struct
           in
           let args = List.map (fun (e, t0) -> let t = instantiate_type tpenv t0 in box (checkt e t) t t0) pts in
           let t = instantiate_type tpenv t0 in
-          if not disable_array_theory
+          if not disable_mapping_theory
           then array_theory l g t args targs t0
           else unbox (WPureFunCall (l, g, targs, args)) t0 t, t, None
         | None ->

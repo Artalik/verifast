@@ -379,8 +379,8 @@ and
   | EnsuresAsn of loc * asn
   | MatchAsn of loc * expr * pat
   | WMatchAsn of loc * expr * pat * type_
-  | SelectArray of loc * expr * expr (* u get<t,u>(array(t,u),t) *)
-  | StoreArray of loc * expr * expr * expr (* array(t,u) set<t,u>(array(t,u),t,u) *)
+  | SelectArray of loc * expr * expr (* u get<t,u>(mapping(t,u),t) *)
+  | StoreArray of loc * expr * expr * expr (* mapping(t,u) set<t,u>(mapping(t,u),t,u) *)
   | ConstantArray of loc * expr (* val *)
   | ExtArray of loc * expr * expr
 and

@@ -133,7 +133,7 @@ module TreeMetrics = struct
   let cw = dotWidth + 2 * padding
 end
 
-let show_ide initialPath prover codeFont traceFont runtime layout javaFrontend enforceAnnotations allowUndeclaredStructTypes dataModel overflowCheck arraytheory =
+let show_ide initialPath prover codeFont traceFont runtime layout javaFrontend enforceAnnotations allowUndeclaredStructTypes dataModel overflowCheck mappingtheory =
   let leftBranchPixbuf = Branchleft_png.pixbuf () in
   let rightBranchPixbuf = Branchright_png.pixbuf () in
   let ctxts_lifo = ref None in
@@ -159,7 +159,7 @@ let show_ide initialPath prover codeFont traceFont runtime layout javaFrontend e
   let scaledTraceFont = ref !traceFont in
   let actionGroup = GAction.action_group ~name:"Actions" () in
   let disableOverflowCheck = ref (not overflowCheck) in
-  let disableArrayTheory = ref (not arraytheory) in
+  let disableMappingTheory = ref (not mappingtheory) in
   let useJavaFrontend = ref false in
   let toggle_java_frontend active =
     (useJavaFrontend := active;
@@ -1345,7 +1345,7 @@ let show_ide initialPath prover codeFont traceFont runtime layout javaFrontend e
               let options = {
                 option_verbose = 0;
                 option_disable_overflow_check = !disableOverflowCheck;
-                option_disable_array_theory = !disableArrayTheory;
+                option_disable_mapping_theory = !disableMappingTheory;
                 option_use_java_frontend = !useJavaFrontend;
                 option_enforce_annotations = enforceAnnotations;
                 option_allow_undeclared_struct_types = allowUndeclaredStructTypes;
@@ -1730,7 +1730,7 @@ let () =
   let enforceAnnotations = ref false in
   let allowUndeclaredStructTypes = ref false in
   let overflow_check = ref true in
-  let array_theory = ref true in
+  let mapping_theory = ref true in
   let data_model = ref data_model_32bit in
   let rec iter args =
     match args with
@@ -1752,9 +1752,9 @@ let () =
     | "-allow_undeclared_struct_types"::args -> allowUndeclaredStructTypes := true; iter args
     | "-target"::target::args -> data_model := data_model_of_string target; iter args
     | "-disable_overflow_check"::args -> overflow_check := false; iter args
-    | "-disable_array_theory"::args -> array_theory := false; iter args
+    | "-disable_mapping_theory"::args -> mapping_theory := false; iter args
     | arg::args when not (startswith arg "-") -> path := Some arg; iter args
-    | [] -> show_ide !path !prover !codeFont !traceFont !runtime !layout !javaFrontend !enforceAnnotations !allowUndeclaredStructTypes !data_model !overflow_check !array_theory
+    | [] -> show_ide !path !prover !codeFont !traceFont !runtime !layout !javaFrontend !enforceAnnotations !allowUndeclaredStructTypes !data_model !overflow_check !mapping_theory
     | _ ->
       let options = [
         "-prover prover    (" ^ list_provers () ^ ")";
@@ -1768,7 +1768,7 @@ let () =
         "-bindir";
         "-enforce_annotations";
         "-disable_overflow_check";
-        "-disable_array_theory";
+        "-disable_mapping_theory";
         "-target target    (supported targets: " ^ String.concat ", " (List.map fst data_models) ^ ")"
       ] in
       GToolbox.message_box "VeriFast IDE" begin

@@ -71,7 +71,7 @@ let rec string_of_type t =
   | StructType sn -> "struct " ^ sn
   | PtrType t -> string_of_type t ^ " *"
   | FuncType ft -> ft
-  | StructArray (t1, t2) -> "array(" ^ string_of_type t1 ^ "," ^ string_of_type t2 ^ ")"
+  | StructArray (t1, t2) -> "mapping(" ^ string_of_type t1 ^ "," ^ string_of_type t2 ^ ")"
   | PredType (tparams, ts, inputParamCount, inductiveness) ->
     let tparamsText = if tparams = [] then "" else "<" ^ String.concat ", " tparams ^ ">" in
     let paramTypesText =
@@ -145,7 +145,7 @@ type options = {
   option_enforce_annotations : bool;
   option_allow_undeclared_struct_types: bool;
   option_data_model: data_model;
-  option_disable_array_theory : bool
+  option_disable_mapping_theory : bool
 } (* ?options *)
 
 (* Region: verify_program_core: the toplevel function *)

@@ -3,7 +3,7 @@
 
 /*
 
-Multiset encoded as arrays ranging in nat.
+Multiset encoded as mappings ranging in nat.
 
 The primitives are:
 - the empty multiset: empty_multiset()
@@ -13,112 +13,69 @@ The primitives are:
 
 */
 
-#include "vfarray.gh"
+#include "mapping.gh"
 
 lemma void note(bool b)
 requires b == true;
 ensures b == true;
 {}
 
-inductive multiset<t> = mk_multiset (array(t, nat));
-
-fixpoint nat multiset_select<t>(multiset<t> m, t i) {
-  switch(m) {
-    case mk_multiset(a): return select(a, i);
-  }
+fixpoint nat multiset_select<t>(mapping(t, nat) m, t i) {
+  return select(m, i);
 }
 
-fixpoint multiset<t> empty_multiset<t>() {
-  return (mk_multiset(constant_array<t,nat>(zero)));
+fixpoint mapping(t, nat) empty_multiset<t>() {
+  return (constant_mapping<t,nat>(zero));
 }
 
-fixpoint multiset<t> multiset_add<t>(multiset<t> m, t i) {
-  switch(m) {
-    case mk_multiset(a):
-      return mk_multiset(store(a, i, succ(select(a, i))));
-  }
+fixpoint mapping(t, nat) multiset_add<t>(mapping(t, nat) m, t i) {
+  return store(m, i, succ(select(m, i)));
 }
 
-lemma t multiset_ext<t>(multiset<t> m1, multiset<t> m2)
+lemma t multiset_ext<t>(mapping(t, nat) m1, mapping(t, nat) m2)
   requires m1 != m2;
   ensures multiset_select(m1, result) != multiset_select(m2, result);
 {
-   switch (m1) {
-     case mk_multiset(a1): {
-       switch (m2) {
-         case mk_multiset(a2): {
-           return array_ext(a1, a2);
-         }
-       }
-     }
-   }
+  return mapping_ext(m1, m2);
 }
 
 // Properties of multiset_add
 
-lemma_auto (multiset_select(multiset_add(m, i), j)) void select_add<t>(multiset<t> m, t i, t j)
+lemma_auto (multiset_select(multiset_add(m, i), j)) void select_add<t>(mapping(t, nat) m, t i, t j)
   requires true;
   ensures multiset_select(multiset_add(m, i), j) == ((i == j) ? succ(multiset_select(m, i)) : multiset_select(m ,j));
-{
-   switch (m) {
-     case mk_multiset(a): {}}
-}
+{}
 
-lemma void multiset_add_commutes<a>(multiset<a> M, a x, a y)
+lemma void multiset_add_commutes<a>(mapping(a, nat) M, a x, a y)
 requires true;
 ensures multiset_add(multiset_add(M, y), x) == multiset_add(multiset_add(M, x), y);
-{
-  multiset<a> My = multiset_add(M, y);
-  multiset<a> Mx = multiset_add(M, x);
-  multiset<a> Myx = multiset_add(My, x);
-  multiset<a> Mxy = multiset_add(Mx, y);
-  if (Myx != Mxy) {
-    a z = multiset_ext(Myx, Mxy);
-  }
-}
+{}
 
-lemma void regular_multiset_add<a>(multiset<a> MA, multiset<a> MB, a x)
-   requires multiset_add(MA,x) == multiset_add(MB,x);
-   ensures MA == MB;
-   {
-     if(MA != MB) {
-       a t = multiset_ext(MA,MB);
-       select_add(MA, x, t);
-       select_add(MB, x, t);
-     }
-   }
+lemma void regular_multiset_add<a>(mapping(a, nat) MA, mapping(a, nat) MB, a x)
+requires multiset_add(MA,x) == multiset_add(MB,x);
+ensures MA == MB;
+{}
 
-lemma multiset<a> multiset_add_join<a>(multiset<a> m1, multiset<a> m2, a x, a y)
+lemma mapping(a, nat) multiset_add_join<a>(mapping(a, nat) m1, mapping(a, nat) m2, a x, a y)
 requires multiset_add(m1, x) == multiset_add(m2, y) &*& x != y;
 ensures m1 == multiset_add(result, y) &*& m2 == multiset_add(result, x);
 {
   switch(multiset_select(m1, y)) {
-    case zero: {
-      note (zero == multiset_select(multiset_add(m1, x), y));
-      assert false;
-    }
-    case succ(p): {
-      switch(m1) {
-        case mk_multiset(a):
-          multiset<a> res = mk_multiset(store(a, y, p));
-          multiset_add_commutes(res, x, y);
-          regular_multiset_add(m2, multiset_add(res, x), y);
-          return res;
-      }
-    }
+    case zero: assert false;
+    case succ(p): return store(m1, y, p);
   }
 }
 
 // Finiteness of a multiset
 
 // l is the list [x1; ...; xn], m is the finite multiset {x1; ...; xn} and all xi satisfy p
-predicate finite_multiset_list<t>(list<t> l, fixpoint(t, bool) p; multiset<t> m, nat n) =
+predicate finite_multiset_list<t>(list<t> l, fixpoint(t, bool) p; mapping(t, nat) m, nat n) =
   l == nil ?
     (m == empty_multiset() &*& n == zero)
   : (l == cons(?x, ?tl) &*& finite_multiset_list(tl, p, ?mm, ?pred) &*& p(x) == true &*& m == multiset_add(mm, x) &*& n == succ(pred));
 
 // m is a finite multiset of n elements that all satisfy p
-predicate finite_multiset<t>(fixpoint(t, bool) p, multiset<t> m, nat card) = finite_multiset_list(_, p, m, card);
+predicate finite_multiset<t>(fixpoint(t, bool) p, mapping(t, nat) m, nat card) = finite_multiset_list(_, p, m, card);
 
 lemma void finite_empty_multiset<t>(fixpoint(t, bool) p)
 requires true;
@@ -128,7 +85,7 @@ ensures finite_multiset(p, empty_multiset<t>(), zero);
   close finite_multiset(p, empty_multiset(), zero);
 }
 
-lemma void finite_multiset_is_empty<t>(fixpoint(t, bool) p, multiset<t> m)
+lemma void finite_multiset_is_empty<t>(fixpoint(t, bool) p, mapping(t, nat) m)
 requires finite_multiset(p, m, zero);
 ensures m == empty_multiset();
 {
@@ -143,7 +100,7 @@ ensures m == empty_multiset();
   }
 }
 
-lemma void finite_multiset_add<t>(fixpoint(t, bool) p, multiset<t> m, t x)
+lemma void finite_multiset_add<t>(fixpoint(t, bool) p, mapping(t, nat) m, t x)
 requires finite_multiset(p, m, ?n) &*& p(x) == true;
 ensures finite_multiset(p, multiset_add(m, x), succ(n));
 {
@@ -153,7 +110,7 @@ ensures finite_multiset(p, multiset_add(m, x), succ(n));
   close finite_multiset(p, multiset_add(m, x), succ(n));
 }
 
-lemma pair<t, multiset<t> > finite_multiset_destruct<t>(fixpoint(t, bool) p, multiset<t> m, nat n)
+lemma pair<t, mapping(t, nat) > finite_multiset_destruct<t>(fixpoint(t, bool) p, mapping(t, nat) m, nat n)
 requires finite_multiset(p, m, succ(n));
 ensures m == multiset_add(snd(result), fst(result)) &*& finite_multiset(p, snd(result), n) &*& p(fst(result)) == true;
 {
@@ -169,28 +126,28 @@ ensures m == multiset_add(snd(result), fst(result)) &*& finite_multiset(p, snd(r
   }
 }
 
-lemma void finite_multiset_remove<t>(fixpoint(t, bool) p, multiset<t> m, t x, nat n)
+lemma void finite_multiset_remove<t>(fixpoint(t, bool) p, mapping(t, nat) m, t x, nat n)
 requires finite_multiset(p, multiset_add(m, x), succ(n));
 ensures finite_multiset(p, m, n) &*& p(x) == true;
 {
   switch(n) {
     case zero: {
-      pair <t, multiset<t> > ym2 = finite_multiset_destruct(p, multiset_add(m, x), n);
+      pair <t, mapping(t, nat) > ym2 = finite_multiset_destruct(p, multiset_add(m, x), n);
       t y = fst(ym2);
-      multiset<t> m2 = snd(ym2);
+      mapping(t, nat) m2 = snd(ym2);
       finite_multiset_is_empty(p, m2);
       if (x != y) { switch(multiset_select(multiset_add(m2, y), x)) {case zero: case succ(pred):} assert false; }
       regular_multiset_add(m, m2, x);
       finite_empty_multiset(p);
     }
     case succ(pred): {
-      pair <t, multiset<t> > ym2 = finite_multiset_destruct(p, multiset_add(m, x), n);
+      pair <t, mapping(t, nat) > ym2 = finite_multiset_destruct(p, multiset_add(m, x), n);
       t y = fst(ym2);
-      multiset<t> m2 = snd(ym2);
+      mapping(t, nat) m2 = snd(ym2);
       if (x == y) {
         regular_multiset_add(m, m2, x);
       } else {
-        multiset<t> m3 = multiset_add_join(m, m2, x, y);
+        mapping(t, nat) m3 = multiset_add_join(m, m2, x, y);
         finite_multiset_remove(p, m3, x, pred);
         finite_multiset_add(p, m3, y);
         multiset_add_commutes(m3, y, x);
@@ -199,7 +156,7 @@ ensures finite_multiset(p, m, n) &*& p(x) == true;
   }
 }
 
-lemma void finite_multiset_clear<t>(fixpoint(t, bool) p, multiset<t> m, nat n)
+lemma void finite_multiset_clear<t>(fixpoint(t, bool) p, mapping(t, nat) m, nat n)
 requires finite_multiset(p, m, n);
 ensures true;
 {
@@ -208,15 +165,15 @@ ensures true;
       finite_multiset_is_empty(p, m);
     }
     case succ(pred): {
-      pair <t, multiset<t> > xm2 = finite_multiset_destruct(p, m, pred);
+      pair <t, mapping(t, nat) > xm2 = finite_multiset_destruct(p, m, pred);
       t x = fst(xm2);
-      multiset<t> m2 = snd(xm2);
+      mapping(t, nat) m2 = snd(xm2);
       finite_multiset_clear(p, m2, pred);
     }
   }
 }
 
-lemma void finite_multiset_dup<t>(fixpoint(t, bool) p, multiset<t> m, nat n)
+lemma void finite_multiset_dup<t>(fixpoint(t, bool) p, mapping(t, nat) m, nat n)
 requires finite_multiset(p, m, n);
 ensures finite_multiset(p, m, n) &*& finite_multiset(p, m, n);
 {
@@ -227,9 +184,9 @@ ensures finite_multiset(p, m, n) &*& finite_multiset(p, m, n);
       finite_empty_multiset(p);
     }
     case succ(pred): {
-      pair <t, multiset<t> > xm2 = finite_multiset_destruct(p, m, pred);
+      pair <t, mapping(t, nat) > xm2 = finite_multiset_destruct(p, m, pred);
       t x = fst(xm2);
-      multiset<t> m2 = snd(xm2);
+      mapping(t, nat) m2 = snd(xm2);
       finite_multiset_dup(p, m2, pred);
       finite_multiset_add(p, m2, x);
       finite_multiset_add(p, m2, x);
@@ -237,7 +194,7 @@ ensures finite_multiset(p, m, n) &*& finite_multiset(p, m, n);
   }
 }
 
-lemma multiset<t> finite_multiset_select<t>(fixpoint (t, bool) p, multiset<t> m, nat n, t x)
+lemma mapping(t, nat) finite_multiset_select<t>(fixpoint (t, bool) p, mapping(t, nat) m, nat n, t x)
 requires finite_multiset(p, m, n) &*& multiset_select(m, x) != zero;
 ensures finite_multiset(p, m, n) &*& p(x) == true &*& m == multiset_add(result, x);
 {
@@ -247,11 +204,11 @@ ensures finite_multiset(p, m, n) &*& p(x) == true &*& m == multiset_add(result, 
       assert false;
     }
     case succ(pred): {
-      pair <t, multiset<t> > ym2 = finite_multiset_destruct(p, m, pred);
+      pair <t, mapping(t, nat) > ym2 = finite_multiset_destruct(p, m, pred);
       t y = fst(ym2);
-      multiset<t> m2 = snd(ym2);
+      mapping(t, nat) m2 = snd(ym2);
       if (x != y) {
-        multiset<t> m3 = finite_multiset_select(p, m2, pred, x);
+        mapping(t, nat) m3 = finite_multiset_select(p, m2, pred, x);
         finite_multiset_add(p, m2, y);
         assert m == multiset_add(m2, y);
         assert m2 == multiset_add(m3, x);
@@ -265,112 +222,112 @@ ensures finite_multiset(p, m, n) &*& p(x) == true &*& m == multiset_add(result, 
   }
 }
 
-// The (finite) multiset of values stored in an array between indexes b (included) and b+n (excluded)
-fixpoint multiset<int> array_multiset(int b, nat n, array(int,int) arr) {
+// The (finite) multiset of values stored in a mapping between indexes b (included) and b+n (excluded)
+fixpoint mapping(int, nat) mapping_multiset(int b, nat n, mapping(int,int) mp) {
   switch(n) {
     case zero: return empty_multiset();
-    case succ(p): return multiset_add(array_multiset(b+1, p, arr), select(arr, b));
+    case succ(p): return multiset_add(mapping_multiset(b+1, p, mp), select(mp, b));
   }
 }
 
 // The trivial predicate
 fixpoint bool truep<t>(t x) { return true; }
 
-lemma void array_multiset_finite(int b, nat n, array(int, int) arr)
+lemma void mapping_multiset_finite(int b, nat n, mapping(int, int) mp)
 requires true;
-ensures finite_multiset(truep, array_multiset(b, n, arr), n);
+ensures finite_multiset(truep, mapping_multiset(b, n, mp), n);
 {
   switch(n) {
     case zero: {
       finite_empty_multiset<int>(truep);
     }
     case succ(p): {
-      array_multiset_finite(b+1, p, arr);
-      finite_multiset_add(truep, array_multiset(b+1, p, arr), select(arr, b));
+      mapping_multiset_finite(b+1, p, mp);
+      finite_multiset_add(truep, mapping_multiset(b+1, p, mp), select(mp, b));
     }
   }
 }
 
-lemma void array_multiset_right(array(int, int) A, int b, int e, nat n)
+lemma void mapping_multiset_right(mapping(int, int) A, int b, int e, nat n)
 requires int_diff(b, e, n) == true &*& b <= e;
-ensures array_multiset(b, succ(n), A) == multiset_add(array_multiset(b, n, A), select(A, e));
+ensures mapping_multiset(b, succ(n), A) == multiset_add(mapping_multiset(b, n, A), select(A, e));
 {
   switch(n) {
     case zero:
     case succ(p): {
-      array_multiset_right(A, b+1, e, p);
-      multiset_add_commutes(array_multiset(b+1, p, A), select(A, e), select(A, b));
+      mapping_multiset_right(A, b+1, e, p);
+      multiset_add_commutes(mapping_multiset(b+1, p, A), select(A, e), select(A, b));
     }
   }
 }
 
-lemma int array_multiset_assoc(array(int, int) a, int b, int e, int v, nat l)
-requires multiset_select(array_multiset(b, l, a), v) != zero &*& int_diff(b, e, l) == true;
+lemma int mapping_multiset_assoc(mapping(int, int) a, int b, int e, int v, nat l)
+requires multiset_select(mapping_multiset(b, l, a), v) != zero &*& int_diff(b, e, l) == true;
 ensures select(a, result) == v &*& b <= result &*& result < e;
 {
   switch(l) {
     case zero: {
-      open array_multiset(b, e, a, m);
+      open mapping_multiset(b, e, a, m);
       assert false;
     }
     case succ(p): {
       if (select(a, b) == v) {
         return b;
       } else {
-        return array_multiset_assoc(a, b+1, e, v, p);
+        return mapping_multiset_assoc(a, b+1, e, v, p);
       }
     }
   }
 }
 
-lemma void array_multiset_select(array(int, int) a, int b, int e, int i, nat l)
+lemma void mapping_multiset_select(mapping(int, int) a, int b, int e, int i, nat l)
 requires b <= i &*& i < e &*& int_diff(b, e, l) == true;
-ensures multiset_select(array_multiset(b, l, a), select(a, i)) != zero;
+ensures multiset_select(mapping_multiset(b, l, a), select(a, i)) != zero;
 {
   switch(l) {
     case zero: assert false;
     case succ(p): {
       if (b != i) {
-        array_multiset_select(a, b+1, e, i, p);
+        mapping_multiset_select(a, b+1, e, i, p);
       }
     }
   }
 }
 
-lemma multiset<int> multiset_select_in(int b, int e, nat n, array(int, int) start, int k)
+lemma mapping(int, nat) multiset_select_in(int b, int e, nat n, mapping(int, int) start, int k)
 requires int_diff(b, e, n) == true &*& b <= k &*& k < e;
-ensures array_multiset(b, n, start) == multiset_add(result, select(start, k));
+ensures mapping_multiset(b, n, start) == multiset_add(result, select(start, k));
 {
-  array_multiset_finite(b, n, start);
-  array_multiset_select(start, b, e, k, n);
-  multiset<int> m = finite_multiset_select(truep, array_multiset(b, n, start), n, select(start, k));
-  finite_multiset_clear(truep, array_multiset(b, n, start), n);
+  mapping_multiset_finite(b, n, start);
+  mapping_multiset_select(start, b, e, k, n);
+  mapping(int, nat) m = finite_multiset_select(truep, mapping_multiset(b, n, start), n, select(start, k));
+  finite_multiset_clear(truep, mapping_multiset(b, n, start), n);
   return m;
 }
 
 // Having the same multiset of elements, this is a way to express that a2 is a permutation of a1
-predicate same_multiset(array(int,int) a1, array(int,int) a2, int b, int e) =
-  array_multiset(b, nat_of_int(e-b), a1) == array_multiset(b, nat_of_int(e-b), a2);
+predicate same_multiset(mapping(int,int) a1, mapping(int,int) a2, int b, int e) =
+  mapping_multiset(b, nat_of_int(e-b), a1) == mapping_multiset(b, nat_of_int(e-b), a2);
 
-lemma void close_same_multiset(array(int, int) a1, array(int, int) a2, int b, int e)
+lemma void close_same_multiset(mapping(int, int) a1, mapping(int, int) a2, int b, int e)
 requires same_multiset(a1, a2, b, e) &*& select(a1, b-1) == select(a2, b-1) &*& b <= e;
 ensures same_multiset(a1, a2, b-1, e);
 {
   open same_multiset(a1, a2, b, e);
   nat n = nat_of_int(e-b);
-  note(array_multiset(b-1, nat_of_int(e-(b-1)), a1) == array_multiset(b-1, succ(n), a1));
-  note(array_multiset(b-1, nat_of_int(e-(b-1)), a2) == array_multiset(b-1, succ(n), a2));
+  note(mapping_multiset(b-1, nat_of_int(e-(b-1)), a1) == mapping_multiset(b-1, succ(n), a1));
+  note(mapping_multiset(b-1, nat_of_int(e-(b-1)), a2) == mapping_multiset(b-1, succ(n), a2));
   close same_multiset(a1, a2, b-1, e);
 }
 
-lemma void same_multiset_refl (array(int,int) start, int b, int e)
+lemma void same_multiset_refl (mapping(int,int) start, int b, int e)
   requires true;
   ensures same_multiset(start, start, b, e);
 {
   close same_multiset(start, start, b, e);
 }
 
-lemma void same_multiset_sym(array(int, int) start, array(int, int) end, int b, int e)
+lemma void same_multiset_sym(mapping(int, int) start, mapping(int, int) end, int b, int e)
 requires same_multiset(start, end, b, e);
 ensures same_multiset(end, start, b, e);
 {
@@ -378,7 +335,7 @@ ensures same_multiset(end, start, b, e);
   close same_multiset(end, start, b, e);
 }
 
-lemma void same_multiset_trans(array(int, int) start, array(int, int) middle, array(int, int) end, int b, int e)
+lemma void same_multiset_trans(mapping(int, int) start, mapping(int, int) middle, mapping(int, int) end, int b, int e)
   requires same_multiset(start, middle, b, e) &*& same_multiset(middle, end, b, e);
   ensures same_multiset(start, end, b, e);
 {
@@ -387,32 +344,30 @@ lemma void same_multiset_trans(array(int, int) start, array(int, int) middle, ar
   close same_multiset(start, end, b, e);
 }
 
-lemma void same_multiset_add_at_end(array(int, int) start, array(int, int) end, int b, int e)
+lemma void same_multiset_add_at_end(mapping(int, int) start, mapping(int, int) end, int b, int e)
   requires same_multiset(start, end, b, e) &*& select(start, e) == select(end, e) &*& b <= e;
   ensures same_multiset(start, end, b, e+1);
 {
   open same_multiset(start,end,b,e);
-  nat n = int_diff_always(b, e);
-  int_diff_le(b, e, n);
-  array_multiset_right(start, b, e, n);
-  array_multiset_right(end, b, e, n);
+  int_diff_nat_of_int(b, e);
+  mapping_multiset_right(start, b, e, nat_of_int(e-b));
+  mapping_multiset_right(end, b, e, nat_of_int(e-b));
   close same_multiset(start, end, b, e+1);
 }
 
-lemma int same_multiset_assoc(array(int, int) start, array(int, int) end, int b, int e, int i)
+lemma int same_multiset_assoc(mapping(int, int) start, mapping(int, int) end, int b, int e, int i)
   requires same_multiset(start, end, b, e) &*& b <= i &*& i < e;
   ensures same_multiset(start, end, b, e) &*& select(start, i) == select(end, result) &*& b <= result &*& result < e;
 {
    open same_multiset(start, end, b, e);
-   nat l = int_diff_always(b, e);
-   int_diff_le(b, e, l);
-   array_multiset_select(start, b, e, i, l);
-   int j = array_multiset_assoc(end, b, e, select(start, i), l);
+   int_diff_nat_of_int(b, e);
+   mapping_multiset_select(start, b, e, i, nat_of_int(e-b));
+   int j = mapping_multiset_assoc(end, b, e, select(start, i), nat_of_int(e-b));
    close same_multiset(start, end, b, e);
    return j;
 }
 
-lemma void same_multiset_store_out_left(int b, int e, nat n, array(int, int) start, int k, int v)
+lemma void same_multiset_store_out_left(int b, int e, nat n, mapping(int, int) start, int k, int v)
   requires k < b &*& int_diff(b, e, n) == true &*& b <= e;
   ensures same_multiset(start, store(start, k, v), b, e);
 {
@@ -425,7 +380,7 @@ lemma void same_multiset_store_out_left(int b, int e, nat n, array(int, int) sta
   }
 }
 
-lemma void same_multiset_store_out_right(int b, int e, nat n, array(int, int) start, int k, int v)
+lemma void same_multiset_store_out_right(int b, int e, nat n, mapping(int, int) start, int k, int v)
   requires e <= k &*& int_diff(b, e, n) == true &*& b <= e;
   ensures same_multiset(start, store(start, k, v), b, e);
 {
@@ -438,9 +393,9 @@ lemma void same_multiset_store_out_right(int b, int e, nat n, array(int, int) st
   }
 }
 
-lemma void same_multiset_store_in(int b, int e, nat n, array(int, int) start, multiset<int> m, int k, int v)
-  requires array_multiset(b, n, start) == multiset_add(m, select(start, k)) &*& int_diff(b, e, n) == true &*& b <= k &*& k < e;
-  ensures array_multiset(b, n, store(start, k, v)) == multiset_add(m, v);
+lemma void same_multiset_store_in(int b, int e, nat n, mapping(int, int) start, mapping(int, nat) m, int k, int v)
+  requires mapping_multiset(b, n, start) == multiset_add(m, select(start, k)) &*& int_diff(b, e, n) == true &*& b <= k &*& k < e;
+  ensures mapping_multiset(b, n, store(start, k, v)) == multiset_add(m, v);
 {
   switch(n) {
     case zero: assert false;
@@ -449,15 +404,15 @@ lemma void same_multiset_store_in(int b, int e, nat n, array(int, int) start, mu
         same_multiset_store_out_left(b+1, e, p, start, k, v);
         int_diff_le(b+1, e, p);
         open same_multiset(start, store(start, k, v), b+1, e);
-        regular_multiset_add(m, array_multiset(b+1, p, store(start, k, v)), select(start, k));
+        regular_multiset_add(m, mapping_multiset(b+1, p, store(start, k, v)), select(start, k));
       } else {
         if(select(start, b) == select(start, k)) {
-          multiset<int> m2 = multiset_select_in(b+1, e, p, start, k); // AM(b+1, p, start) == m2 + {start[k]}
-          regular_multiset_add(array_multiset(b+1, p, start), m, select(start, b)); // AM(b+1, p, start) == m
+          mapping(int, nat) m2 = multiset_select_in(b+1, e, p, start, k); // AM(b+1, p, start) == m2 + {start[k]}
+          regular_multiset_add(mapping_multiset(b+1, p, start), m, select(start, b)); // AM(b+1, p, start) == m
           same_multiset_store_in(b+1, e, p, start, m2, k, v); // AM(b+1, p, end) == m2 + {v}
           multiset_add_commutes(m2, select(start, k), v);
         } else {
-          multiset<int> m2 = multiset_add_join(array_multiset(b+1, p, start), m, select(start, b), select(start, k)); // AM(b+1, p, start) == m2 + {start[k]}, m == m2 + {start[b]}
+          mapping(int, nat) m2 = multiset_add_join(mapping_multiset(b+1, p, start), m, select(start, b), select(start, k)); // AM(b+1, p, start) == m2 + {start[k]}, m == m2 + {start[b]}
           same_multiset_store_in(b+1, e, p, start, m2, k, v); // AM(b+1, p, end) == m2 + {v}
           multiset_add_commutes(m2, select(start, b), v);
         }
@@ -466,89 +421,98 @@ lemma void same_multiset_store_in(int b, int e, nat n, array(int, int) start, mu
   }
 }
 
-// To prove the same_multiset_concat lemma below, we need to generalize array_multiset to a "linear" version
+// To prove the same_multiset_concat lemma below, we need to generalize mapping_multiset to a "linear" version
 // plugging an arbitrary multiset m in the base case.
-fixpoint multiset<int> array_multiset_linear(int b, nat n, array(int, int) arr, multiset<int> m) {
+fixpoint mapping(int, nat) mapping_multiset_linear(int b, nat n, mapping(int, int) mp, mapping(int, nat) m) {
   switch(n) {
     case zero: return m;
-    case succ(p): return multiset_add(array_multiset_linear(b+1, p, arr, m), select(arr, b));
+    case succ(p): return multiset_add(mapping_multiset_linear(b+1, p, mp, m), select(mp, b));
   }
 }
 
-lemma void array_multiset_linear_empty(int b, nat n, array(int, int) arr)
+lemma void mapping_multiset_linear_empty(int b, nat n, mapping(int, int) mp)
 requires true;
-ensures array_multiset_linear(b, n, arr, empty_multiset()) == array_multiset(b, n, arr);
+ensures mapping_multiset_linear(b, n, mp, empty_multiset()) == mapping_multiset(b, n, mp);
 {
   switch(n) {
     case zero:
     case succ(p): {
-      array_multiset_linear_empty(b+1, p, arr);
+      mapping_multiset_linear_empty(b+1, p, mp);
     }
   }
 }
 
-lemma void array_multiset_linear_add(int b, nat n, array(int, int) arr, multiset<int> m, int x)
+lemma void mapping_multiset_linear_add(int b, nat n, mapping(int, int) mp, mapping(int, nat) m, int x)
 requires true;
-ensures array_multiset_linear(b, n, arr, multiset_add(m, x)) == multiset_add(array_multiset_linear(b, n, arr, m), x);
+ensures mapping_multiset_linear(b, n, mp, multiset_add(m, x)) == multiset_add(mapping_multiset_linear(b, n, mp, m), x);
 {
   switch(n) {
     case zero:
     case succ(p): {
-      array_multiset_linear_add(b+1, p, arr, m, x);
-      multiset_add_commutes(array_multiset_linear(b+1, p, arr, m), x, select(arr, b));
+      mapping_multiset_linear_add(b+1, p, mp, m, x);
+      multiset_add_commutes(mapping_multiset_linear(b+1, p, mp, m), x, select(mp, b));
     }
   }
 }
 
-lemma void same_array_multiset_linear(int b, int e, nat n, array(int, int) arr1, array(int, int) arr2, multiset<int> m, nat c)
-requires same_multiset(arr1, arr2, b, e) &*& b <= e &*& int_diff(b, e, n) == true &*& finite_multiset(truep, m, c);
-ensures array_multiset_linear(b, n, arr1, m) == array_multiset_linear(b, n, arr2, m);
+lemma void same_mapping_multiset_linear(int b, int e, nat n, mapping(int, int) mp1, mapping(int, int) mp2, mapping(int, nat) m, nat c)
+requires same_multiset(mp1, mp2, b, e) &*& b <= e &*& int_diff(b, e, n) == true &*& finite_multiset(truep, m, c);
+ensures mapping_multiset_linear(b, n, mp1, m) == mapping_multiset_linear(b, n, mp2, m);
 {
   switch(c) {
     case zero: {
       finite_multiset_is_empty(truep, m);
-      array_multiset_linear_empty(b, n, arr1);
-      array_multiset_linear_empty(b, n, arr2);
-      open same_multiset(arr1, arr2, b, e);
+      mapping_multiset_linear_empty(b, n, mp1);
+      mapping_multiset_linear_empty(b, n, mp2);
+      open same_multiset(mp1, mp2, b, e);
       int_diff_le(b, e, n);
     }
     case succ(p): {
-      pair <int, multiset<int> > xm2 = finite_multiset_destruct(truep, m, p);
+      pair <int, mapping(int, nat) > xm2 = finite_multiset_destruct(truep, m, p);
       int x = fst(xm2);
-      multiset<int> m2 = snd(xm2);
-      same_array_multiset_linear(b, e, n, arr1, arr2, m2, p);
-      array_multiset_linear_add(b, n, arr1, m2, x);
-      array_multiset_linear_add(b, n, arr2, m2, x);
+      mapping(int, nat) m2 = snd(xm2);
+      same_mapping_multiset_linear(b, e, n, mp1, mp2, m2, p);
+      mapping_multiset_linear_add(b, n, mp1, m2, x);
+      mapping_multiset_linear_add(b, n, mp2, m2, x);
     }
   }
 }
 
-lemma void array_multiset_linear_concat(array(int, int) arr, int b, int e0, int e1, nat left)
+lemma void mapping_multiset_linear_concat(mapping(int, int) mp, int b, int e0, int e1, nat left)
 requires b <= e0 &*& e0 <= e1 &*& int_diff(b, e0, left) == true;
-ensures array_multiset(b, nat_of_int(e1-b), arr) == array_multiset_linear(b, left, arr, array_multiset(e0, nat_of_int(e1-e0), arr));
+ensures mapping_multiset(b, nat_of_int(e1-b), mp) == mapping_multiset_linear(b, left, mp, mapping_multiset(e0, nat_of_int(e1-e0), mp));
 {
   switch(left) {
     case zero:
     case succ(p): {
-      array_multiset_linear_concat(arr, b+1, e0, e1, p);
-      multiset<int> m = array_multiset(e0, nat_of_int(e1-e0), arr);
+      mapping_multiset_linear_concat(mp, b+1, e0, e1, p);
+      mapping(int, nat) m = mapping_multiset(e0, nat_of_int(e1-e0), mp);
       note (nat_of_int(e1-b) == succ(nat_of_int(e1-b-1)));
     }
   }
 }
 
-lemma void same_multiset_concat(array(int, int) arr1, array(int, int) arr2, int b, int e0, int e1)
-requires same_multiset(arr1, arr2, b, e0) &*& same_multiset(arr1, arr2, e0, e1) &*& b <= e0 &*& e0 <= e1;
-ensures same_multiset(arr1, arr2, b, e1);
+lemma void same_mapping_same_multiset(mapping(int, int) mp1, mapping(int, int) mp2, int b, nat n)
+requires same_mapping(mp1, mp2, b, n) == true;
+ensures mapping_multiset(b, n, mp1) == mapping_multiset(b, n, mp2);
 {
-  nat left = int_diff_always(b, e0);
-  array_multiset_linear_concat(arr1, b, e0, e1, left);
-  array_multiset_linear_concat(arr2, b, e0, e1, left);
-  open same_multiset(arr1, arr2, e0, e1);
-  int_diff_le(b, e0, left);
-  multiset<int> m = array_multiset(e0, nat_of_int(e1-e0), arr1);
-  array_multiset_finite(e0, nat_of_int(e1-e0), arr1);
-  same_array_multiset_linear(b, e0, left, arr1, arr2, m, nat_of_int(e1-e0));
-  close same_multiset(arr1, arr2, b, e1);
+  switch(n) {
+    case zero:
+    case succ(pred): same_mapping_same_multiset(mp1, mp2, b+1, pred);
+  }
+}
+
+lemma void same_multiset_concat(mapping(int, int) mp1, mapping(int, int) mp2, int b, int e0, int e1)
+requires same_multiset(mp1, mp2, b, e0) &*& same_multiset(mp1, mp2, e0, e1) &*& b <= e0 &*& e0 <= e1;
+ensures same_multiset(mp1, mp2, b, e1);
+{
+  int_diff_nat_of_int(b, e0);
+  mapping_multiset_linear_concat(mp1, b, e0, e1, nat_of_int(e0-b));
+  mapping_multiset_linear_concat(mp2, b, e0, e1, nat_of_int(e0-b));
+  open same_multiset(mp1, mp2, e0, e1);
+  mapping(int, nat) m = mapping_multiset(e0, nat_of_int(e1-e0), mp1);
+  mapping_multiset_finite(e0, nat_of_int(e1-e0), mp1);
+  same_mapping_multiset_linear(b, e0, nat_of_int(e0-b), mp1, mp2, m, nat_of_int(e1-e0));
+  close same_multiset(mp1, mp2, b, e1);
 }
 #endif
